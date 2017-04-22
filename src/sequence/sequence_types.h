@@ -1,0 +1,9 @@
+#ifndef _JH_CORE_SEQUENCE_TYPES_H_
+#define _JH_CORE_SEQUENCE_TYPES_H_
+
+#define JH_START_OF_SEQUENCE_ID 0
+#define JH_END_OF_SEQUENCE_ID   1
+
+#define JH_RESERVED_IDS_COUNT   2
+
+#endif
