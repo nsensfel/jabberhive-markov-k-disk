@@ -37,7 +37,7 @@
 #endif
 
 #define JH_PRINT_STDERR(io, symbol, str, ...)\
-   fprintf(io, "[" symbol "]" JH_LOCATION " " str "\n", __VA_ARGS__);
+   fprintf(io, "!AI [" symbol "]" JH_LOCATION " " str "\n", __VA_ARGS__);
 
 /*
  * Given that we use preprocessor contants as flags, we can expect the compilers
@@ -94,7 +94,7 @@
 /* For outputs without dynamic content (static). ******************************/
 
 #define JH_PRINT_S_STDERR(io, symbol, str)\
-   fprintf(io, "[" symbol "]" JH_LOCATION " " str "\n");
+   fprintf(io, "!AI [" symbol "]" JH_LOCATION " " str "\n");
 
 #define JH_S_DEBUG(io, flag, str)\
    JH_ISOLATE\

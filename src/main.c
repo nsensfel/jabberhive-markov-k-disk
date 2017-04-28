@@ -16,10 +16,10 @@ static void print_help (const char runnable [const restrict static 1])
       "\nUsages:\n"
       "   SERVER:\t%s SESSION_NAME MARKOV_ORDER\n"
       "   CLEAN UP:\t%s -c SESSION_NAME\n"
-      "   SHOW HELP:\tAnything else\n"
+      "   SHOW HELP:\tAnything else.\n"
       "\nParameters:\n"
-      "   SESSION_NAME: Valid UNIX socket.\n"
-      "   MARKOV_ORDER: Positive integer, greater than 1.\n",
+      "   SESSION_NAME:\tValid UNIX socket.\n"
+      "   MARKOV_ORDER:\tPositive integer, greater than 1.\n",
       JH_SERVER_VERSION,
       JH_PROTOCOL_VERSION,
       runnable,

@@ -9,9 +9,9 @@ add_definitions(-D_POSIX_SOURCE)
 add_definitions(-D_POSIX_C_SOURCE=200809L)
 
 if(CMAKE_COMPILER_IS_GNUCC)
+   set(CMAKE_C_FLAGS "-g -Wall -Wpedantic -Wconversion")
    message(STATUS "GNUCC detected. Adding '-O3' parameter.")
    set(CMAKE_C_FLAGS "-O3")
-   #set(CMAKE_C_FLAGS "-g -Wall -Wpedantic -Wconversion")
 endif()
 
 # ${SRC_FILES} is recursively defined in the subdirectories.

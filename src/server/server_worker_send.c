@@ -80,7 +80,7 @@ int JH_server_worker_send_positive
 {
    int err;
 
-   err = fprintf(worker->socket_as_file, "!P\n");
+   err = fprintf(worker->socket_as_file, "!P \n");
 
    if (err == 0)
    {
@@ -114,7 +114,7 @@ int JH_server_worker_send_negative
 {
    int err;
 
-   err = fprintf(worker->socket_as_file, "!N\n");
+   err = fprintf(worker->socket_as_file, "!N \n");
 
    if (err == 0)
    {

@@ -211,8 +211,8 @@ static int handle_rlr
    (
       JH_sequence_from_undercase_string
       (
-         (const JH_char *) (worker->buffer + 6),
-         (worker->buffer_length - 7),
+         (const JH_char *) (worker->buffer + 5),
+         (worker->buffer_length - 6),
          worker->params.knowledge,
          &(worker->sequence_buffer),
          &(worker->sequence_buffer_capacity),

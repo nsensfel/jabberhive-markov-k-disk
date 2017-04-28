@@ -51,8 +51,12 @@ static int bind_socket
 
    addr.sun_family = AF_UNIX;
 
-   /* addr.sun_path == 108. Using 107 ensure null-termination. */
-   strncpy(addr.sun_path, socket_name, 107);
+   strncpy
+   (
+      (void *) addr.sun_path,
+      (const void *) socket_name,
+      (sizeof(addr.sun_path) - 1)
+   );
 
    errno = old_errno;
 
@@ -157,6 +161,7 @@ int JH_server_socket_open
    const char socket_name [const restrict static 1]
 )
 {
+   printf("\"%s\"\n", socket_name);
    if (create_socket(&(server_socket->file_descriptor)) < 0)
    {
       return -1;
