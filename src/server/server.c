@@ -14,6 +14,7 @@ int JH_server_main
    struct JH_server server;
    JH_index retries;
 
+   retries = 0;
    /* TODO
    if (JH_server_set_signal_handlers < 0)
    {
