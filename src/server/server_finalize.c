@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "../knowledge/knowledge.h"
 #include "../parameters/parameters.h"
 
 #include "server.h"
@@ -37,6 +38,7 @@ void JH_server_finalize
    struct JH_server server [const restrict static 1]
 )
 {
+   JH_knowledge_finalize(&(server->k));
    finalize_thread_collection(&(server->workers));
    finalize_socket(&(server->socket));
 }

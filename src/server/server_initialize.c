@@ -79,6 +79,11 @@ int JH_server_initialize
    const struct JH_parameters params [const restrict static 1]
 )
 {
+   if (JH_server_set_signal_handlers() < 0)
+   {
+      return -1;
+   }
+
    if (initialize_worker_collection(&(server->workers)) < 0)
    {
       return -1;
@@ -86,6 +91,7 @@ int JH_server_initialize
 
    if (JH_knowledge_initialize(&(server->k)) < 0)
    {
+      /* TODO: finalize "server->workers" */
       return -1;
    }
 
@@ -98,6 +104,9 @@ int JH_server_initialize
       ) < 0
    )
    {
+      /* TODO: finalize "server->workers" */
+      JH_knowledge_finalize(&(server->k));
+
       return -2;
    }
 
