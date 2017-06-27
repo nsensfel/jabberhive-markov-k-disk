@@ -35,7 +35,10 @@ int JH_server_wait_for_event
       &(server->socket.timeout)
    );
 
-   JH_DEBUG(stderr, 1, "SELECT returned: %i, errno is %i.", ready_fds, errno);
+   if (errno != 0)
+   {
+      JH_DEBUG(stderr, 1, "SELECT returned: %i, errno is %i.", ready_fds, errno);
+   }
 
    if (errno == EINTR)
    {

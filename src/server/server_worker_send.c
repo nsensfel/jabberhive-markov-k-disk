@@ -188,7 +188,6 @@ int JH_server_worker_send_generated_reply
 
    if (written != (worker->buffer_length * sizeof(JH_char)))
    {
-      // TODO: Error handling.
       JH_S_ERROR
       (
          stderr,
