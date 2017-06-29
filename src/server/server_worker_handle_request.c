@@ -19,43 +19,21 @@ static int load_reply
 
    if
    (
-      JH_knowledge_lock_access
-      (
-         worker->params.knowledge,
-         worker->socket_as_file
-      ) < 0
-   )
-   {
-      return -1;
-   }
-
-   if
-   (
       JH_knowledge_rarest_word
       (
          worker->params.knowledge,
          worker->sequence_buffer,
          worker->sequence_buffer_length,
-         &rarest_word_id
+         &rarest_word_id,
+         worker->socket_as_file
       ) < 0
    )
    {
-      JH_knowledge_unlock_access
-      (
-         worker->params.knowledge,
-         worker->socket_as_file
-      );
 
       JH_S_ERROR(worker->socket_as_file, "Could not find rarest word.");
 
       return -1;
    }
-
-   JH_knowledge_unlock_access
-   (
-      worker->params.knowledge,
-      worker->socket_as_file
-   );
 
    JH_DEBUG
    (
@@ -162,18 +140,6 @@ static int handle_rl
 
    if
    (
-      JH_knowledge_lock_access
-      (
-         worker->params.knowledge,
-         worker->socket_as_file
-      ) < 0
-   )
-   {
-      return JH_server_worker_send_negative(worker);
-   }
-
-   if
-   (
       JH_knowledge_learn_sequence
       (
          worker->params.knowledge,
@@ -184,20 +150,8 @@ static int handle_rl
       ) < 0
    )
    {
-      JH_knowledge_unlock_access
-      (
-         worker->params.knowledge,
-         worker->socket_as_file
-      );
-
       return JH_server_worker_send_negative(worker);
    }
-
-   JH_knowledge_unlock_access
-   (
-      worker->params.knowledge,
-      worker->socket_as_file
-   );
 
    return JH_server_worker_send_positive(worker);
 }
@@ -226,18 +180,6 @@ static int handle_rlr
 
    if
    (
-      JH_knowledge_lock_access
-      (
-         worker->params.knowledge,
-         worker->socket_as_file
-      ) < 0
-   )
-   {
-      return JH_server_worker_send_negative(worker);
-   }
-
-   if
-   (
       JH_knowledge_learn_sequence
       (
          worker->params.knowledge,
@@ -248,20 +190,8 @@ static int handle_rlr
       ) < 0
    )
    {
-      JH_knowledge_unlock_access
-      (
-         worker->params.knowledge,
-         worker->socket_as_file
-      );
-
       return JH_server_worker_send_negative(worker);
    }
-
-   JH_knowledge_unlock_access
-   (
-      worker->params.knowledge,
-      worker->socket_as_file
-   );
 
    if (load_reply(worker) < 0)
    {

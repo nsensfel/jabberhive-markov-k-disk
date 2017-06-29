@@ -48,13 +48,16 @@ static int weighted_random_pick
 
 int JH_knowledge_random_tws_target
 (
-   const struct JH_knowledge k [const static 1],
+   struct JH_knowledge k [const static 1],
    JH_index target [const restrict static 1],
    const JH_index word_id,
-   const JH_index sequence_id
+   const JH_index sequence_id,
+   FILE io [const restrict static 1]
 )
 {
    JH_index s_index;
+
+   JH_knowledge_readlock_word(k, word_id, io);
 
    if
    (
@@ -66,26 +69,45 @@ int JH_knowledge_random_tws_target
       ) < 0
    )
    {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
       return -1;
    }
 
-   return
+   if
+   (
       weighted_random_pick
       (
          &(k->words[word_id].tws.sequences_ref[s_index]),
          target
-      );
+      )
+      < 0
+   )
+   {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
+      return -1;
+   }
+   else
+   {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
+      return 0;
+   }
 }
 
 int JH_knowledge_random_swt_target
 (
-   const struct JH_knowledge k [const static 1],
+   struct JH_knowledge k [const static 1],
    const JH_index sequence_id,
    const JH_index word_id,
-   JH_index target [const restrict static 1]
+   JH_index target [const restrict static 1],
+   FILE io [const restrict static 1]
 )
 {
    JH_index s_index;
+
+   JH_knowledge_readlock_word(k, word_id, io);
 
    if
    (
@@ -97,13 +119,29 @@ int JH_knowledge_random_swt_target
       ) < 0
    )
    {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
       return -1;
    }
 
-   return
+   if
+   (
       weighted_random_pick
       (
          &(k->words[word_id].swt.sequences_ref[s_index]),
          target
-      );
+      )
+      < 0
+   )
+   {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
+      return -1;
+   }
+   else
+   {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
+      return 0;
+   }
 }

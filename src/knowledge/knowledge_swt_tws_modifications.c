@@ -163,6 +163,8 @@ int JH_knowledge_strengthen_swt
 {
    JH_index s_index, t_index;
 
+   JH_knowledge_writelock_word(k, word_id, io);
+
    if
    (
       JH_knowledge_find_markov_sequence
@@ -184,6 +186,8 @@ int JH_knowledge_strengthen_swt
          ) < 0
       )
       {
+         JH_knowledge_writeunlock_word(k, word_id, io);
+
          return -1;
       }
    }
@@ -210,6 +214,8 @@ int JH_knowledge_strengthen_swt
          ) < 0
       )
       {
+         JH_knowledge_writeunlock_word(k, word_id, io);
+
          return -1;
       }
    }
@@ -233,11 +239,15 @@ int JH_knowledge_strengthen_swt
          "[W] Unable to strengthen SWT link: link is already at max strength."
       );
 
+      JH_knowledge_writeunlock_word(k, word_id, io);
+
       return 1;
    }
 
    k->words[word_id].swt.sequences_ref[s_index].occurrences += 1;
    k->words[word_id].swt.sequences_ref[s_index].targets[t_index].occurrences += 1;
+
+   JH_knowledge_writeunlock_word(k, word_id, io);
 
    return 0;
 }
@@ -252,6 +262,8 @@ int JH_knowledge_strengthen_tws
 )
 {
    JH_index s_index, t_index;
+
+   JH_knowledge_writelock_word(k, word_id, io);
 
    if
    (
@@ -274,6 +286,8 @@ int JH_knowledge_strengthen_tws
          ) < 0
       )
       {
+         JH_knowledge_writeunlock_word(k, word_id, io);
+
          return -1;
       }
    }
@@ -300,6 +314,8 @@ int JH_knowledge_strengthen_tws
          ) < 0
       )
       {
+         JH_knowledge_writeunlock_word(k, word_id, io);
+
          return -1;
       }
    }
@@ -323,11 +339,15 @@ int JH_knowledge_strengthen_tws
          "[E] Unable to strengthen TWS link: link is already at max strength."
       );
 
+      JH_knowledge_writeunlock_word(k, word_id, io);
+
       return -1;
    }
 
    k->words[word_id].tws.sequences_ref[s_index].occurrences += 1;
    k->words[word_id].tws.sequences_ref[s_index].targets[t_index].occurrences += 1;
+
+   JH_knowledge_writeunlock_word(k, word_id, io);
 
    return 0;
 }

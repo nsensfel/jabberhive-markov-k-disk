@@ -69,6 +69,8 @@ static void knowledge_word_finalize
 
    knowledge_sequence_collection_finalize(&(w->swt));
    knowledge_sequence_collection_finalize(&(w->tws));
+
+   pthread_rwlock_destroy(&(w->lock));
 }
 
 /* See: "knowledge.h" */
@@ -118,5 +120,6 @@ void JH_knowledge_finalize (struct JH_knowledge k [const restrict static 1])
       k->sequences_sorted = (JH_index *) NULL;
    }
 
-   pthread_mutex_destroy(&(k->mutex));
+   pthread_rwlock_destroy(&(k->words_lock));
+   pthread_rwlock_destroy(&(k->sequences_lock));
 }

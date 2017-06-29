@@ -114,9 +114,7 @@ static int add_word
       return 0;
    }
 
-   (void) JH_knowledge_lock_access(k, io);
-   JH_knowledge_get_word(k, word_id, &word, &word_size);
-   (void) JH_knowledge_unlock_access(k, io);
+   JH_knowledge_get_word(k, word_id, &word, &word_size, io);
 
    insertion_point = *destination_length;
 

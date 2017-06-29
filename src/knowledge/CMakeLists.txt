@@ -7,6 +7,7 @@ set(
    ${CMAKE_CURRENT_SOURCE_DIR}/knowledge_learn_markov_sequence.c
    ${CMAKE_CURRENT_SOURCE_DIR}/knowledge_learn_sequence.c
    ${CMAKE_CURRENT_SOURCE_DIR}/knowledge_learn_word.c
+   ${CMAKE_CURRENT_SOURCE_DIR}/knowledge_locks.c
    ${CMAKE_CURRENT_SOURCE_DIR}/knowledge_search.c
    ${CMAKE_CURRENT_SOURCE_DIR}/knowledge_swt_tws_modifications.c
 )

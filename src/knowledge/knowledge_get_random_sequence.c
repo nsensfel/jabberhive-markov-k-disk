@@ -49,7 +49,7 @@ static int weighted_random_pick
 
 int JH_knowledge_copy_random_swt_sequence
 (
-   const struct JH_knowledge k [const static 1],
+   struct JH_knowledge k [const static 1],
    JH_index sequence [const restrict static 1],
    const JH_index word_id,
    const JH_index markov_order,
@@ -58,6 +58,8 @@ int JH_knowledge_copy_random_swt_sequence
 {
    JH_index sequence_id;
 
+   JH_knowledge_readlock_word(k, word_id, io);
+
    if
    (
       weighted_random_pick
@@ -65,7 +67,8 @@ int JH_knowledge_copy_random_swt_sequence
          &(k->words[word_id].swt),
          k->words[word_id].occurrences,
          &sequence_id
-      ) < 0
+      )
+      < 0
    )
    {
       JH_S_PROG_ERROR
@@ -73,10 +76,16 @@ int JH_knowledge_copy_random_swt_sequence
          io,
          "Knowledge inconsistency; there are no acceptable markov sequences "
          "linked to a word that has been picked as being an acceptable pillar."
-      )
-   ;
+      );
+
+      JH_knowledge_readunlock_word(k, word_id, io);
+
       return -1;
    }
+
+   JH_knowledge_readunlock_word(k, word_id, io);
+
+   JH_knowledge_readlock_sequences(k, io);
 
    memcpy
    (
@@ -84,6 +93,8 @@ int JH_knowledge_copy_random_swt_sequence
       (const void *) k->sequences[sequence_id],
       (((size_t) (markov_order - 1)) * sizeof(JH_index))
    );
+
+   JH_knowledge_readunlock_sequences(k, io);
 
    return 0;
 }

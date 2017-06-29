@@ -20,17 +20,40 @@ static void initialize_sequence_collection
    c->sequences_ref_sorted = (JH_index *) NULL;
 }
 
-static void initialize_word
+static int initialize_word
 (
    struct JH_knowledge_word w [const restrict static 1]
 )
 {
+   int error;
+
    w->word = (const JH_char *) NULL;
    w->word_length = 0;
    w->occurrences = 0;
 
    initialize_sequence_collection(&(w->swt));
    initialize_sequence_collection(&(w->tws));
+
+   error =
+      pthread_rwlock_init
+      (
+         &(w->lock),
+         (const pthread_rwlockattr_t *) NULL
+      );
+
+   if (error != 0)
+   {
+      JH_ERROR
+      (
+         stderr,
+         "Unable to initialize a knowledge's word lock: %s.",
+         strerror(error)
+      );
+
+      return -1;
+   }
+
+   return 0;
 }
 
 /******************************************************************************/
@@ -269,6 +292,8 @@ int JH_knowledge_learn_word
       return -1;
    }
 
+   JH_knowledge_readlock_words(k, io);
+
    if
    (
       JH_knowledge_find_word_id
@@ -280,6 +305,45 @@ int JH_knowledge_learn_word
       ) == 0
    )
    {
+      JH_knowledge_readunlock_words(k, io);
+
+      JH_DEBUG
+      (
+         io,
+         JH_DEBUG_KNOWLEDGE_LEARN_WORD,
+         "Word of size %u is already known (id: %u).",
+         (JH_index) word_length,
+         *word_id
+      );
+
+      return 0;
+   }
+
+   /*
+    * We need to write, but we currently have reading access.
+    * We can't get the writing access while someone (even us) has the reading
+    * access, so we release the reading access.
+    */
+   JH_knowledge_readunlock_words(k, io);
+
+   JH_knowledge_writelock_words(k, io);
+   /*
+    * Now we have writer access, but someone else might have modified 'k' before
+    * we did, so we need to find the word's location again.
+    */
+   if
+   (
+      JH_knowledge_find_word_id
+      (
+         k,
+         word,
+         (((size_t) word_length) * sizeof(JH_char)),
+         word_id
+      ) == 0
+   )
+   {
+      JH_knowledge_writeunlock_words(k, io);
+
       JH_DEBUG
       (
          io,
@@ -305,5 +369,16 @@ int JH_knowledge_learn_word
       sorted_id
    );
 
-   return add_word(k, word, (JH_index) word_length, *word_id, sorted_id, io);
+   if (add_word(k, word, (JH_index) word_length, *word_id, sorted_id, io) < 0)
+   {
+      JH_knowledge_writeunlock_words(k, io);
+
+      return -1;
+   }
+   else
+   {
+      JH_knowledge_writeunlock_words(k, io);
+
+      return 0;
+   }
 }

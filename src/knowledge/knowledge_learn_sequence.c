@@ -256,8 +256,11 @@ int JH_knowledge_learn_sequence
          return -1;
       }
 
+      JH_knowledge_writelock_word(k, sequence[i], io);
 
       k->words[sequence[i]].occurrences += 1;
+
+      JH_knowledge_writeunlock_word(k, sequence[i], io);
    }
 
    return 0;

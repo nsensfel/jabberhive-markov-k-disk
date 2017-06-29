@@ -380,6 +380,8 @@ int JH_knowledge_learn_markov_sequence
       }
    }
 
+   JH_knowledge_readlock_sequences(k, io);
+
    if
    (
       JH_knowledge_find_sequence
@@ -388,9 +390,49 @@ int JH_knowledge_learn_markov_sequence
          sequence,
          markov_order,
          sequence_id
-      ) == 0
+      )
+      == 0
    )
    {
+      JH_knowledge_readunlock_sequences(k, io);
+
+      JH_DEBUG
+      (
+         io,
+         JH_DEBUG_KNOWLEDGE_LEARN_SEQUENCE,
+         "Markov sequence is known. ID: %u",
+         *sequence_id
+      );
+
+      return 0;
+   }
+
+   /*
+    * We need to write, but we currently have reading access.
+    * We can't get the writing access while someone (even us) has the reading
+    * access, so we release the reading access.
+    */
+   JH_knowledge_readunlock_sequences(k, io);
+
+   JH_knowledge_writelock_sequences(k, io);
+   /*
+    * Now we have writer access, but someone else might have modified 'k' before
+    * we did, so we need to find the sequence's location again.
+    */
+   if
+   (
+      JH_knowledge_find_sequence
+      (
+         k,
+         sequence,
+         markov_order,
+         sequence_id
+      )
+      == 0
+   )
+   {
+      JH_knowledge_writeunlock_sequences(k, io);
+
       JH_DEBUG
       (
          io,
@@ -405,7 +447,8 @@ int JH_knowledge_learn_markov_sequence
    sorted_id = *sequence_id;
    *sequence_id = k->sequences_length;
 
-   return
+   if
+   (
       add_sequence
       (
          k,
@@ -414,5 +457,18 @@ int JH_knowledge_learn_markov_sequence
          *sequence_id,
          sorted_id,
          io
-      );
+      )
+      < 0
+   )
+   {
+      JH_knowledge_writeunlock_sequences(k, io);
+
+      return -1;
+   }
+   else
+   {
+      JH_knowledge_writeunlock_sequences(k, io);
+
+      return 0;
+   }
 }

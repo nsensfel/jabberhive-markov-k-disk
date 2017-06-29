@@ -30,8 +30,6 @@ static int add_word_to_sequence
 {
    JH_index word_id;
 
-   (void) JH_knowledge_lock_access(k, io);
-
    if
    (
       JH_knowledge_learn_word
@@ -44,12 +42,8 @@ static int add_word_to_sequence
       ) < 0
    )
    {
-      (void) JH_knowledge_unlock_access(k, io);
-
       return -1;
    }
-
-   (void) JH_knowledge_unlock_access(k, io);
 
    if
    (

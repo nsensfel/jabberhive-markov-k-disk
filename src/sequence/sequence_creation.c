@@ -45,9 +45,9 @@ static int extend_left
 {
    JH_index sequence_id, word_id;
 
-   (void) JH_knowledge_lock_access(k, io);
-
    /* preceding_words_weights_sum > 0 */
+
+   JH_knowledge_readlock_sequences(k, io);
 
    if
    (
@@ -60,16 +60,14 @@ static int extend_left
       ) < 0
    )
    {
-      (void) JH_knowledge_unlock_access(k, io);
+      JH_knowledge_readunlock_sequences(k, io);
 
       JH_S_ERROR(io, "Could not find matching TWS sequence.");
 
       return -1;
    }
 
-   (void) JH_knowledge_unlock_access(k, io);
-
-   (void) JH_knowledge_lock_access(k, io);
+   JH_knowledge_readunlock_sequences(k, io);
 
    if
    (
@@ -78,18 +76,15 @@ static int extend_left
          k,
          &word_id,
          (*sequence)[0],
-         sequence_id
+         sequence_id,
+         io
       ) < 0
    )
    {
-      (void) JH_knowledge_unlock_access(k, io);
-
       JH_S_ERROR(io, "Could not find matching TWS target.");
 
       return -1;
    }
-
-   (void) JH_knowledge_unlock_access(k, io);
 
    if
    (
@@ -243,9 +238,9 @@ static int extend_right
 {
    JH_index sequence_id, word_id;
 
-   (void) JH_knowledge_lock_access(k, io);
-
    /* preceding_words_weights_sum > 0 */
+
+   JH_knowledge_readlock_sequences(k, io);
 
    if
    (
@@ -258,7 +253,7 @@ static int extend_right
       ) < 0
    )
    {
-      (void) JH_knowledge_unlock_access(k, io);
+      JH_knowledge_readunlock_sequences(k, io);
 
       JH_S_PROG_ERROR
       (
@@ -270,9 +265,7 @@ static int extend_right
       return -1;
    }
 
-   (void) JH_knowledge_unlock_access(k, io);
-
-   (void) JH_knowledge_lock_access(k, io);
+   JH_knowledge_readunlock_sequences(k, io);
 
    if
    (
@@ -281,12 +274,11 @@ static int extend_right
          k,
          sequence_id,
          (*sequence)[*sequence_length - 1],
-         &word_id
+         &word_id,
+         io
       ) < 0
    )
    {
-      (void) JH_knowledge_unlock_access(k, io);
-
       JH_S_PROG_ERROR
       (
          io,
@@ -296,9 +288,6 @@ static int extend_right
 
       return -1;
    }
-
-   (void) JH_knowledge_unlock_access(k, io);
-
 
    /* following_words_weights_sum > 0 */
 
@@ -314,12 +303,8 @@ static int extend_right
       ) < 0
    )
    {
-      (void) JH_knowledge_unlock_access(k, io);
-
       return -3;
    }
-
-   (void) JH_knowledge_unlock_access(k, io);
 
    return 0;
 }
@@ -454,8 +439,6 @@ static int initialize_sequence
 {
    sequence[(markov_order - 1)] = initial_word;
 
-   (void) JH_knowledge_lock_access(k, io);
-
    if
    (
       JH_knowledge_copy_random_swt_sequence
@@ -468,12 +451,8 @@ static int initialize_sequence
       ) < 0
    )
    {
-      (void) JH_knowledge_unlock_access(k, io);
-
       return -1;
    }
-
-   (void) JH_knowledge_unlock_access(k, io);
 
    if (JH_DEBUG_SEQUENCE_CREATION_INIT)
    {

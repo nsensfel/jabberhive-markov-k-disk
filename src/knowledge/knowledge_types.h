@@ -40,14 +40,18 @@ struct JH_knowledge_word
 
    /* [Target] [Word] [Sequence] */
    struct JH_knowledge_sequence_collection tws;
+
+   pthread_rwlock_t lock;
 };
 
 struct JH_knowledge
 {
 #ifndef JH_RUNNING_FRAMA_C
-   pthread_mutex_t mutex;
+   pthread_rwlock_t words_lock;
+   pthread_rwlock_t sequences_lock;
 #else
-   int mutex;
+   int words_lock;
+   int sequences_lock;
 #endif
 
    struct JH_knowledge_word * words;

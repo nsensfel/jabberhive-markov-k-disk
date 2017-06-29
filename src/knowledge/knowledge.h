@@ -8,43 +8,77 @@
 
 #include "knowledge_types.h"
 
-/*@
-   requires \valid(k);
-   requires \separated(k, io);
-
-// Do not use if lock is already yours.
-   requires (k->mutex == 1);
-
-// Returns zero on success, -1 on failure.
-   assigns \result;
-   ensures ((\result == 0) || (\result == -1));
-
-// On success, lock is acquired.
-   ensures ((\result == 0) ==> (k->mutex == 0));
-
-// Changes the status of the lock.
-   assigns (k->mutex);
-@*/
-int JH_knowledge_lock_access
+int JH_knowledge_readlock_words
 (
    struct JH_knowledge k [const restrict static 1],
    FILE io [const restrict static 1]
 );
 
-/*@
-   requires \valid(k);
-   requires \separated(k, io);
+int JH_knowledge_writelock_words
+(
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+);
 
-// Do not use if lock is not yours.
-   requires (k->mutex == 0);
+int JH_knowledge_readunlock_words
+(
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+);
 
-// Lock is released.
-   ensures (k->mutex == 1);
+int JH_knowledge_writeunlock_words
+(
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+);
 
-// Changes the status of the lock.
-   assigns (k->mutex);
-@*/
-void JH_knowledge_unlock_access
+int JH_knowledge_readlock_word
+(
+   struct JH_knowledge k [const restrict static 1],
+   const JH_index i,
+   FILE io [const restrict static 1]
+);
+
+int JH_knowledge_writelock_word
+(
+   struct JH_knowledge k [const restrict static 1],
+   const JH_index i,
+   FILE io [const restrict static 1]
+);
+
+int JH_knowledge_readunlock_word
+(
+   struct JH_knowledge k [const restrict static 1],
+   const JH_index i,
+   FILE io [const restrict static 1]
+);
+
+int JH_knowledge_writeunlock_word
+(
+   struct JH_knowledge k [const restrict static 1],
+   const JH_index i,
+   FILE io [const restrict static 1]
+);
+
+int JH_knowledge_readlock_sequences
+(
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+);
+
+int JH_knowledge_writelock_sequences
+(
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+);
+
+int JH_knowledge_readunlock_sequences
+(
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+);
+
+int JH_knowledge_writeunlock_sequences
 (
    struct JH_knowledge k [const restrict static 1],
    FILE io [const restrict static 1]
@@ -112,10 +146,11 @@ int JH_knowledge_learn_markov_sequence
 
 void JH_knowledge_get_word
 (
-   const struct JH_knowledge k [const static 1],
+   struct JH_knowledge k [const static 1],
    const JH_index word_ref,
    const JH_char * word [const restrict static 1],
-   JH_index word_length [const restrict static 1]
+   JH_index word_length [const restrict static 1],
+   FILE io [const restrict static 1]
 );
 
 /*
@@ -127,6 +162,8 @@ void JH_knowledge_get_word
  *    {word} is not in {k}.
  *    {*result} is where {word} was expected to be found in
  *    {k->sorted_indices}.
+ *
+ * Does not acquire locks
  */
 int JH_knowledge_find_word_id
 (
@@ -136,6 +173,9 @@ int JH_knowledge_find_word_id
    JH_index result [const restrict static 1]
 );
 
+ /*
+ * Does not acquire locks
+ */
 int JH_knowledge_find_sequence
 (
    const struct JH_knowledge k [const static 1],
@@ -146,12 +186,16 @@ int JH_knowledge_find_sequence
 
 int JH_knowledge_rarest_word
 (
-   const struct JH_knowledge k [const static 1],
+   struct JH_knowledge k [const static 1],
    const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
-   JH_index word_id [const restrict static 1]
+   JH_index word_id [const restrict static 1],
+   FILE io [const restrict static 1]
 );
 
+/*
+* Does not acquire locks
+*/
 int JH_knowledge_find_markov_sequence
 (
    const JH_index sequence_id,
@@ -159,6 +203,9 @@ int JH_knowledge_find_markov_sequence
    JH_index result [const restrict static 1]
 );
 
+/*
+* Does not acquire locks
+*/
 int JH_knowledge_find_sequence_target
 (
    const JH_index target_id,
@@ -168,23 +215,25 @@ int JH_knowledge_find_sequence_target
 
 int JH_knowledge_random_tws_target
 (
-   const struct JH_knowledge k [const static 1],
+   struct JH_knowledge k [const static 1],
    JH_index target [const restrict static 1],
    const JH_index word_id,
-   const JH_index sequence_id
+   const JH_index sequence_id,
+   FILE io [const restrict static 1]
 );
 
 int JH_knowledge_random_swt_target
 (
-   const struct JH_knowledge k [const static 1],
+   struct JH_knowledge k [const static 1],
    const JH_index sequence_id,
    const JH_index word_id,
-   JH_index target [const restrict static 1]
+   JH_index target [const restrict static 1],
+   FILE io [const restrict static 1]
 );
 
 int JH_knowledge_copy_random_swt_sequence
 (
-   const struct JH_knowledge k [const static 1],
+   struct JH_knowledge k [const static 1],
    JH_index sequence [const restrict static 1],
    const JH_index word_id,
    const JH_index markov_order,
