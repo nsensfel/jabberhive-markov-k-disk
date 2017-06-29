@@ -288,10 +288,6 @@ int JH_knowledge_readunlock_word
 {
    int err;
 
-   if (JH_knowledge_readunlock_words(k, io) < 0)
-   {
-      return -1;
-   }
 
    err = pthread_rwlock_unlock(&(k->words[i].lock));
 
@@ -304,6 +300,13 @@ int JH_knowledge_readunlock_word
          strerror(err)
       );
 
+      JH_knowledge_readunlock_words(k, io);
+
+      return -1;
+   }
+
+   if (JH_knowledge_readunlock_words(k, io) < 0)
+   {
       return -1;
    }
 
@@ -319,11 +322,6 @@ int JH_knowledge_writeunlock_word
 {
    int err;
 
-   if (JH_knowledge_readunlock_words(k, io) < 0)
-   {
-      return -1;
-   }
-
    err = pthread_rwlock_unlock(&(k->words[i].lock));
 
    if (err != 0)
@@ -335,6 +333,13 @@ int JH_knowledge_writeunlock_word
          strerror(err)
       );
 
+      JH_knowledge_readunlock_words(k, io);
+
+      return -1;
+   }
+
+   if (JH_knowledge_readunlock_words(k, io) < 0)
+   {
       return -1;
    }
 
