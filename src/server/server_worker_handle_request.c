@@ -98,9 +98,27 @@ static int handle_rpv
    struct JH_server_worker worker [const restrict static 1]
 )
 {
-   /* TODO */
+   if
+   (
+      (worker->buffer[5] == '1')
+      &&
+      (
+         (worker->buffer[6] == ',')
+         || (worker->buffer[6] == '\n')
+      )
+   )
+   {
+      if (JH_server_worker_send_confirm_protocol_version(worker) < 0)
+      {
+         return -1;
+      }
 
-   return -1;
+      return JH_server_worker_send_positive(worker);
+   }
+   else
+   {
+      return JH_server_worker_send_negative(worker);
+   }
 }
 
 static int handle_rps

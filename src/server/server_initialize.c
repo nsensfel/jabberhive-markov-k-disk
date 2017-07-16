@@ -48,6 +48,8 @@ static int initialize_worker_collection
 
    if (error != 0)
    {
+      pthread_mutex_destroy(&(c->mutex));
+
       JH_FATAL
       (
          stderr,
@@ -61,7 +63,16 @@ static int initialize_worker_collection
    return 0;
 }
 
-void initialize_thread_parameters
+static void finalize_worker_collection
+(
+   struct JH_server_thread_collection c [const restrict static 1]
+)
+{
+   pthread_mutex_destroy(&(c->mutex));
+   pthread_barrier_destroy(&(c->barrier));
+}
+
+static void initialize_thread_parameters
 (
    struct JH_server server [const restrict static 1],
    const struct JH_parameters params [const restrict static 1]
@@ -91,7 +102,8 @@ int JH_server_initialize
 
    if (JH_knowledge_initialize(&(server->k)) < 0)
    {
-      /* TODO: finalize "server->workers" */
+      finalize_worker_collection(&(server->workers));
+
       return -1;
    }
 
@@ -104,7 +116,7 @@ int JH_server_initialize
       ) < 0
    )
    {
-      /* TODO: finalize "server->workers" */
+      finalize_worker_collection(&(server->workers));
       JH_knowledge_finalize(&(server->k));
 
       return -2;

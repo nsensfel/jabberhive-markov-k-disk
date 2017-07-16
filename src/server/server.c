@@ -15,12 +15,6 @@ int JH_server_main
    JH_index retries;
 
    retries = 0;
-   /* TODO
-   if (JH_server_set_signal_handlers < 0)
-   {
-      return -1;
-   }
-   */
 
    if (JH_server_initialize(&server, params) < 0)
    {
@@ -32,7 +26,6 @@ int JH_server_main
       switch (JH_server_wait_for_event(&server))
       {
          case 0: /* Timed out or signal'd. */
-            //JH_S_DEBUG(stderr, 1, "Timed out...");
             JH_server_handle_joining_threads(&server);
 
             retries = 0;
