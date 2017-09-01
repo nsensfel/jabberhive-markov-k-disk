@@ -19,3 +19,12 @@ protocol for more information.
 - POSIX compliant OS.
 - C compiler (with C99 support).
 - (GNU) make.
+
+## How to Build
+* Download the source code.
+* Enter the following command: ``$ make``.
+* Run ``$ ./jh-markov-k-ram`` to see how to use the binary.
+
+## Example of Use
+* Create a server instance with a socket named ``/tmp/jh0`` and markov order of
+   3: ``$ ./jabberhive-markov-k-ram /tmp/jh0 3``
