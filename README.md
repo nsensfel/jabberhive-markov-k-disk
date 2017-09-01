@@ -27,4 +27,4 @@ protocol for more information.
 
 ## Example of Use
 * Create a server instance with a socket named ``/tmp/jh0`` and markov order of
-   3: ``$ ./jabberhive-markov-k-ram /tmp/jh0 3``
+   3: ``$ ./jh-markov-k-ram /tmp/jh0 3``
