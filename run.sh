@@ -12,5 +12,5 @@ while true
 do
    rm -f $1
    # Run with listenin socket on $1 and Markov rank 3.
-   $CURRENT_DIRECTORY/bin/jabberhive-markov-k-ram $1 3
+   $CURRENT_DIRECTORY/jabberhive-markov-k-ram $1 3
 done
