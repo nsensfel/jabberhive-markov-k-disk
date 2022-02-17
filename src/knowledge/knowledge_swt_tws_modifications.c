@@ -10,7 +10,6 @@ static int add_target
 (
    struct JH_knowledge_sequence_data sd [const restrict static 1],
    const JH_index target_id,
-   const JH_index s_index,
    const JH_index t_index,
    FILE io [const restrict static 1]
 )
@@ -208,7 +207,6 @@ int JH_knowledge_strengthen_swt
          (
             &(k->words[word_id].swt.sequences_ref[s_index]),
             target_id,
-            s_index,
             t_index,
             io
          ) < 0
@@ -308,7 +306,6 @@ int JH_knowledge_strengthen_tws
          (
             &(k->words[word_id].tws.sequences_ref[s_index]),
             target_id,
-            s_index,
             t_index,
             io
          ) < 0

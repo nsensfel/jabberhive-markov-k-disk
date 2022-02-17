@@ -45,7 +45,6 @@ static int add_swt_sequence
    const JH_index sequence [const restrict static 1],
    const size_t index,
    const size_t sequence_length,
-   const JH_index markov_order,
    JH_index buffer [const restrict static 1],
    const JH_index buffer_length,
    FILE io [const restrict static 1]
@@ -132,7 +131,6 @@ static int add_tws_sequence
    const JH_index sequence [const restrict static 1],
    const size_t index,
    const size_t sequence_length,
-   const JH_index markov_order,
    JH_index buffer [const restrict static 1],
    const JH_index buffer_length,
    FILE io [const restrict static 1]
@@ -227,7 +225,6 @@ int JH_knowledge_learn_sequence
             sequence,
             i,
             sequence_length,
-            markov_order,
             buffer,
             buffer_length,
             io
@@ -246,7 +243,6 @@ int JH_knowledge_learn_sequence
             sequence,
             i,
             sequence_length,
-            markov_order,
             buffer,
             buffer_length,
             io

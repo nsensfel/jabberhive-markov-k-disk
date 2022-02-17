@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdint.h> /* defines SIZE_MAX */
 
+#include "../core/index.h"
+
 #include "../error/error.h"
 
 #include "knowledge.h"
@@ -103,8 +105,11 @@ static int reallocate_words_list
 
    if
    (
-      (SIZE_MAX / sizeof(struct JH_knowledge_word))
-      < (size_t) k->words_length
+      JH_index_cannot_allocate_more
+      (
+         sizeof(struct JH_knowledge_word),
+         k->words_length
+      )
    )
    {
       JH_S_ERROR

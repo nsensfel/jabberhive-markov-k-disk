@@ -3,6 +3,21 @@
 
 #include "index_types.h"
 
+#if JH_INDEX_MAX >= SIZE_MAX
+#define JH_index_cannot_allocate_more(type_size, counter) \
+      (\
+         (((size_t) (counter)) == SIZE_MAX) \
+         || ((counter) == JH_INDEX_MAX) \
+         || ((((size_t) (counter)) + 1) > (SIZE_MAX / (type_size))) \
+      )
+#else
+#define JH_index_cannot_allocate_more(type_size, counter) \
+      (\
+         ((counter) == JH_INDEX_MAX) \
+         || ((((size_t) (counter)) + 1) > (SIZE_MAX / (type_size))) \
+      )
+#endif
+
 /*
  * Returns a random JH_index.
  */

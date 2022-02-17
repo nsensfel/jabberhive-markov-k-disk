@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdint.h> /* defines SIZE_MAX */
 
+#include "../core/index.h"
+
 #include "../sequence/sequence.h"
 
 #include "../error/error.h"
@@ -45,7 +47,14 @@ static int reallocate_sequences_list
 {
    JH_index ** new_sequences;
 
-   if ((SIZE_MAX / sizeof(JH_index *)) < (size_t) k->sequences_length)
+   if
+   (
+      JH_index_cannot_allocate_more
+      (
+         sizeof(JH_index *),
+         k->sequences_length
+      )
+   )
    {
       JH_S_ERROR
       (
@@ -88,7 +97,14 @@ static int reallocate_sequences_sorted_list
 {
    JH_index * new_sequences_sorted;
 
-   if ((SIZE_MAX / sizeof(JH_index)) < (size_t) k->sequences_length)
+   if
+   (
+      JH_index_cannot_allocate_more
+      (
+         sizeof(JH_index),
+         k->sequences_length
+      )
+   )
    {
       JH_S_ERROR
       (

@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "../core/index.h"
+
 #include "../parameters/parameters.h"
 
 #include "server.h"
@@ -63,11 +65,10 @@ static int get_new_thread (struct JH_server server [const restrict static 1])
 
    if
    (
-      (server->workers.threads_capacity == JH_INDEX_MAX)
-      ||
+      JH_index_cannot_allocate_more
       (
-         (size_t) (server->workers.threads_capacity + 1)
-         > (SIZE_MAX / sizeof(struct JH_server_thread_data))
+         sizeof(struct JH_server_thread_data),
+         server->workers.threads_capacity
       )
    )
    {
