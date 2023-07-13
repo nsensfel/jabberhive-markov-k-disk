@@ -21,6 +21,7 @@ static int load_reply
    (
       JH_knowledge_rarest_word
       (
+         worker->params.server_params,
          worker->params.knowledge,
          worker->sequence_buffer,
          worker->sequence_buffer_length,
@@ -47,6 +48,7 @@ static int load_reply
    (
       JH_sequence_create_from
       (
+         worker->params.server_params,
          rarest_word_id,
          (size_t *) NULL,
          worker->params.knowledge,
@@ -71,6 +73,7 @@ static int load_reply
    (
       JH_sequence_to_undercase_string
       (
+         worker->params.server_params,
          worker->sequence_buffer,
          worker->sequence_buffer_length,
          worker->params.knowledge,
@@ -143,6 +146,7 @@ static int handle_rl
    (
       JH_sequence_from_undercase_string
       (
+         worker->params.server_params,
          (const JH_char *) (worker->buffer + 4),
          (worker->buffer_length - 5),
          worker->params.knowledge,
@@ -160,10 +164,10 @@ static int handle_rl
    (
       JH_knowledge_learn_sequence
       (
+         worker->params.server_params,
          worker->params.knowledge,
          worker->sequence_buffer,
          worker->sequence_buffer_length,
-         JH_parameters_get_markov_order(worker->params.server_params),
          worker->socket_as_file
       ) < 0
    )
@@ -183,6 +187,7 @@ static int handle_rlr
    (
       JH_sequence_from_undercase_string
       (
+         worker->params.server_params,
          (const JH_char *) (worker->buffer + 5),
          (worker->buffer_length - 6),
          worker->params.knowledge,
@@ -200,10 +205,10 @@ static int handle_rlr
    (
       JH_knowledge_learn_sequence
       (
+         worker->params.server_params,
          worker->params.knowledge,
          worker->sequence_buffer,
          worker->sequence_buffer_length,
-         JH_parameters_get_markov_order(worker->params.server_params),
          worker->socket_as_file
       ) < 0
    )
@@ -233,6 +238,7 @@ static int handle_rr
    (
       JH_sequence_from_undercase_string
       (
+         worker->params.server_params,
          (const JH_char *) (worker->buffer + 4),
          (worker->buffer_length - 5),
          worker->params.knowledge,

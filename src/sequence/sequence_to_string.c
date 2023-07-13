@@ -97,6 +97,7 @@ static int increment_required_capacity
 
 static int add_word
 (
+   const struct JH_parameters params [const restrict static 1],
    const JH_index word_id,
    struct JH_knowledge k [const restrict static 1],
    JH_char * destination [const restrict static 1],
@@ -105,7 +106,7 @@ static int add_word
    FILE io [const restrict static 1]
 )
 {
-   const JH_char * word;
+   JH_char * word;
    JH_index word_size;
    size_t insertion_point;
 
@@ -114,7 +115,10 @@ static int add_word
       return 0;
    }
 
-   JH_knowledge_get_word(k, word_id, &word, &word_size, io);
+   if (JH_knowledge_get_word(params, k, word_id, &word, &word_size, io) < 0)
+   {
+      return -1;
+   }
 
    insertion_point = *destination_length;
 
@@ -122,6 +126,8 @@ static int add_word
    /* (word_size == JH_INDEX_MAX) ==> could not have learned word. */
    if (increment_required_capacity(destination_length, (word_size + 1), io) < 0)
    {
+      free((void *) word);
+
       return -1;
    }
 
@@ -136,6 +142,8 @@ static int add_word
       ) < 0
    )
    {
+      free((void *) word);
+
       return -2;
    }
 
@@ -145,6 +153,8 @@ static int add_word
       (const void *) word,
       word_size
    );
+
+   free((void *) word);
 
    (*destination)[*destination_length - 1] = ' ';
 
@@ -156,6 +166,7 @@ static int add_word
 /******************************************************************************/
 int JH_sequence_to_undercase_string
 (
+   const struct JH_parameters params [const restrict static 1],
    const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
    struct JH_knowledge k [const restrict static 1],
@@ -175,6 +186,7 @@ int JH_sequence_to_undercase_string
       (
          add_word
          (
+            params,
             sequence[i],
             k,
             destination,

@@ -13,6 +13,7 @@ enum JH_invocation_objective
 struct JH_parameters
 {
    const char * restrict session;
+   const char * restrict database_path;
    JH_index markov_order;
 };
 

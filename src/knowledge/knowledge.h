@@ -1,12 +1,27 @@
 #ifndef _JH_KNOWLEDGE_KNOWLEDGE_H_
 #define _JH_KNOWLEDGE_KNOWLEDGE_H_
 
+#include <stdio.h>
+#include <stdbool.h>
+
 #include "../core/char_types.h"
 #include "../core/index_types.h"
 
 #include "../error/error.h"
 
+#include "../parameters/parameters_types.h"
+
 #include "knowledge_types.h"
+
+char * JH_knowledge_get_sorted_sequences_filename
+(
+   const struct JH_knowledge k [const restrict static 1]
+);
+
+char * JH_knowledge_get_sorted_words_filename
+(
+   const struct JH_knowledge k [const restrict static 1]
+);
 
 int JH_knowledge_readlock_words
 (
@@ -103,7 +118,12 @@ int JH_knowledge_writeunlock_sequences
 // At least some fields of k are set in any case.
    assigns (*k);
 @*/
-int JH_knowledge_initialize (struct JH_knowledge k [const restrict static 1]);
+int JH_knowledge_initialize
+(
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+);
 
 void JH_knowledge_finalize (struct JH_knowledge k [const restrict static 1]);
 
@@ -119,7 +139,8 @@ void JH_knowledge_finalize (struct JH_knowledge k [const restrict static 1]);
  */
 int JH_knowledge_learn_word
 (
-   struct JH_knowledge k [const static 1],
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
    const JH_char word [const restrict static 1],
    const size_t word_length,
    JH_index result [const restrict static 1],
@@ -128,27 +149,28 @@ int JH_knowledge_learn_word
 
 int JH_knowledge_learn_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
    const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
-   const JH_index markov_order,
    FILE io [const restrict static 1]
 );
 
 int JH_knowledge_learn_markov_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
    const JH_index sequence [const restrict static 1],
-   const JH_index markov_order, /* Pre (> markov_order 1) */
    JH_index sequence_id [const restrict static 1],
    FILE io [const restrict static 1]
 );
 
-void JH_knowledge_get_word
+int JH_knowledge_get_word
 (
-   struct JH_knowledge k [const static 1],
-   const JH_index word_ref,
-   const JH_char * word [const restrict static 1],
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
+   const JH_index word_id,
+   JH_char * word [const restrict static 1],
    JH_index word_length [const restrict static 1],
    FILE io [const restrict static 1]
 );
@@ -165,28 +187,34 @@ void JH_knowledge_get_word
  *
  * Does not acquire locks
  */
-int JH_knowledge_find_word_id
+int JH_knowledge_find_word
 (
+   const struct JH_parameters params [const restrict static 1],
    const struct JH_knowledge k [const restrict static 1],
    const JH_char word [const restrict static 1],
    const size_t word_size,
-   JH_index result [const restrict static 1]
+   JH_index found_word_id [const restrict static 1],
+   JH_index expected_word_sorted_ix [const restrict static 1],
+   FILE io [const restrict static 1]
 );
 
- /*
+/*
  * Does not acquire locks
  */
 int JH_knowledge_find_sequence
 (
-   const struct JH_knowledge k [const static 1],
+   const struct JH_parameters params [const restrict static 1],
+   const struct JH_knowledge k [const restrict static 1],
    const JH_index sequence [const restrict static 1],
-   const JH_index markov_order, /* Pre: (> 1) */
-   JH_index sequence_id [const restrict static 1]
+   JH_index found_sequence_id [const restrict static 1],
+   JH_index expected_sequence_sorted_ix [const restrict static 1],
+   FILE io [const restrict static 1]
 );
 
 int JH_knowledge_rarest_word
 (
-   struct JH_knowledge k [const static 1],
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
    const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
    JH_index word_id [const restrict static 1],
@@ -196,11 +224,14 @@ int JH_knowledge_rarest_word
 /*
 * Does not acquire locks
 */
-int JH_knowledge_find_markov_sequence
+int JH_knowledge_find_adjacent_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    const JH_index sequence_id,
-   const struct JH_knowledge_sequence_collection sc [const restrict static 1],
-   JH_index result [const restrict static 1]
+   const JH_index word_id,
+   const bool sequence_is_prefix,
+   JH_index found_or_expected_ix [const restrict static 1],
+   FILE io [const restrict static 1]
 );
 
 /*
@@ -208,53 +239,43 @@ int JH_knowledge_find_markov_sequence
 */
 int JH_knowledge_find_sequence_target
 (
-   const JH_index target_id,
-   const struct JH_knowledge_sequence_data sd [const restrict static 1],
-   JH_index result [const restrict static 1]
-);
-
-int JH_knowledge_random_tws_target
-(
-   struct JH_knowledge k [const static 1],
-   JH_index target [const restrict static 1],
+   const struct JH_parameters params [const restrict static 1],
    const JH_index word_id,
-   const JH_index sequence_id,
+   const JH_index adjacent_sequence_ix,
+   const bool is_swt,
+   const JH_index target_id,
+   JH_index result_ix [const restrict static 1],
    FILE io [const restrict static 1]
 );
 
-int JH_knowledge_random_swt_target
+int JH_knowledge_random_target
 (
-   struct JH_knowledge k [const static 1],
-   const JH_index sequence_id,
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
    const JH_index word_id,
+   const JH_index sequence_id,
+   const bool is_swt,
    JH_index target [const restrict static 1],
    FILE io [const restrict static 1]
 );
 
-int JH_knowledge_copy_random_swt_sequence
+int JH_knowledge_copy_random_prefix
 (
-   struct JH_knowledge k [const static 1],
-   JH_index sequence [const restrict static 1],
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
    const JH_index word_id,
-   const JH_index markov_order,
+   JH_index copied_prefix [const restrict static 1],
    FILE io [const restrict static 1]
 );
 
-int JH_knowledge_strengthen_swt
+int JH_knowledge_strengthen_adjacent_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
    const JH_index sequence_id,
    const JH_index word_id,
    const JH_index target_id,
-   FILE io [const restrict static 1]
-);
-
-int JH_knowledge_strengthen_tws
-(
-   struct JH_knowledge k [const restrict static 1],
-   const JH_index target_id,
-   const JH_index word_id,
-   const JH_index sequence_id,
+   const bool is_swt,
    FILE io [const restrict static 1]
 );
 
@@ -280,4 +301,31 @@ int JH_knowledge_weaken_tws
    FILE io [const restrict static 1]
 );
 */
+
+void JH_knowledge_finalize_sequence_target
+(
+   const struct JH_knowledge_target target [const restrict static 1]
+);
+
+void JH_knowledge_finalize_adjacent_sequence
+(
+   const struct JH_knowledge_adjacent_sequence as [const restrict static 1]
+);
+
+/*
+void JH_knowledge_finalize_sequence_collection
+(
+   const struct JH_knowledge_sequence_collection sc [const restrict static 1]
+);
+*/
+
+void JH_knowledge_finalize_sequence
+(
+   JH_index * sequence [const restrict static 1]
+);
+
+void JH_knowledge_finalize_word
+(
+   struct JH_knowledge_word word [const restrict static 1]
+);
 #endif

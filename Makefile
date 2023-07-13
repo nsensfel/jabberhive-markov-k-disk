@@ -7,7 +7,7 @@ CFLAGS += -D_POSIX_SOURCE
 CFLAGS += -D_POSIX_C_SOURCE=200809L
 CFLAGS += $(PTHREADS_LIB_FLAGS)
 ################################################################################
-EXECUTABLE ?= jh-markov-k-ram
+EXECUTABLE ?= jh-markov-k-disk
 BASE_DIR ?= $(CURDIR)
 SRC_DIR ?= $(BASE_DIR)/src
 COMPILE_DIR ?= $(BASE_DIR)/compilation_data

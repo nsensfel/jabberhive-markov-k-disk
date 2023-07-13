@@ -5,23 +5,201 @@
 
 #include "../error/error.h"
 
+#include "../io/io.h"
+
 #include "knowledge.h"
 
 /** Basic functions of the JH_knowledge structure ****************************/
 
-/* See: "knowledge.h" */
-int JH_knowledge_initialize (struct JH_knowledge k [const restrict static 1])
+static int initialize_without_database
+(
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+)
 {
-   int error;
    JH_index reserved_word_id;
 
-   k->words = (struct JH_knowledge_word *) NULL;
+   if
+   (
+      (
+         JH_knowledge_learn_word
+         (
+            params,
+            k,
+            "[SoS]",
+            /* word_length = */ 5,
+            &reserved_word_id,
+            io
+         ) < 0
+      )
+      ||
+      (
+         JH_knowledge_learn_word
+         (
+            params,
+            k,
+            "[EoS]",
+            /* word_length = */ 5,
+            &reserved_word_id,
+            io
+         ) < 0
+      )
+   )
+   {
+      JH_S_FATAL(io, "Unable to learn reserved words.");
+
+      return -1;
+   }
+
+   return 0;
+}
+
+static int initialize_with_database
+(
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+)
+{
+   JH_index i;
+
+   if
+   (
+      JH_io_read_sorted_words
+      (
+         k->words_sorted_filename,
+         &(k->words_length),
+         &(k->words_sorted),
+         io
+      )
+      < 0
+   )
+   {
+      return -1;
+   }
+
+   if
+   (
+      JH_io_read_sorted_sequences
+      (
+         k->sequences_sorted_filename,
+         &(k->sequences_length),
+         &(k->sequences_sorted),
+         io
+      )
+      < 0
+   )
+   {
+      free((void *) k->sequences_sorted);
+
+      return -1;
+   }
+
+   k->word_locks =
+      (pthread_rwlock_t *) calloc
+      (
+         (size_t) k->words_length,
+         sizeof(pthread_rwlock_t)
+      );
+
+   if (k->word_locks == (pthread_rwlock_t *) NULL)
+   {
+      JH_S_ERROR
+      (
+         io,
+         "Unable to allocate the memory required for the word locks list."
+      );
+
+      free((void *) k->sequences_sorted);
+      free((void *) k->words_sorted);
+
+      return -2;
+   }
+
+   for (i = 0; i < k->words_length; ++i)
+   {
+      int error;
+
+      error =
+         pthread_rwlock_init
+         (
+            (k->word_locks + i),
+            (const pthread_rwlockattr_t *) NULL
+         );
+
+      if (error != 0)
+      {
+         JH_FATAL
+         (
+            io,
+            "Unable to initialize word lock: %s.",
+            strerror(error)
+         );
+
+         while (i > 0)
+         {
+            i--;
+
+            pthread_rwlock_destroy(k->word_locks + i);
+         }
+
+         free((void *) k->sequences_sorted);
+         free((void *) k->words_sorted);
+         free((void *) k->word_locks);
+
+         return -3;
+      }
+   }
+
+   return 0;
+}
+
+/* See: "knowledge.h" */
+int JH_knowledge_initialize
+(
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
+   FILE io [const restrict static 1]
+)
+{
+   int error;
+
    k->words_length = 0;
    k->words_sorted = (JH_index *) NULL;
+   k->word_locks = (pthread_rwlock_t *) NULL;
 
-   k->sequences = (JH_index **) NULL;
+   if
+   (
+      JH_io_generate_sorted_words_filename
+      (
+         params,
+         &(k->words_sorted_filename),
+         io
+      )
+      < 0
+   )
+   {
+      return -1;
+   }
+
    k->sequences_length = 0;
    k->sequences_sorted = (JH_index *) NULL;
+
+   if
+   (
+      JH_io_generate_sorted_sequences_filename
+      (
+         params,
+         &(k->sequences_sorted_filename),
+         io
+      )
+      < 0
+   )
+   {
+      free((void *) k->words_sorted_filename);
+
+      return -1;
+   }
 
 #ifndef JH_RUNNING_FRAMA_C
    error =
@@ -38,7 +216,7 @@ int JH_knowledge_initialize (struct JH_knowledge k [const restrict static 1])
    {
       JH_FATAL
       (
-         stderr,
+         io,
          "Unable to initialize knowledge's words lock: %s.",
          strerror(error)
       );
@@ -61,7 +239,7 @@ int JH_knowledge_initialize (struct JH_knowledge k [const restrict static 1])
    {
       JH_FATAL
       (
-         stderr,
+         io,
          "Unable to initialize knowledge's sequences lock: %s.",
          strerror(error)
       );
@@ -69,32 +247,19 @@ int JH_knowledge_initialize (struct JH_knowledge k [const restrict static 1])
       return -1;
    }
 
-   if
-   (
-      (
-         JH_knowledge_learn_word
-         (
-            k,
-            "[SoS]",
-            5,
-            &reserved_word_id,
-            stderr
-         ) < 0
-      )
-      ||
-      (
-         JH_knowledge_learn_word
-         (
-            k,
-            "[EoS]",
-            5,
-            &reserved_word_id,
-            stderr
-         ) < 0
-      )
-   )
+   if (JH_io_database_exists(k))
    {
-      JH_S_FATAL(stderr, "Unable to learn reserved words.");
+      error = initialize_with_database(k, io);
+   }
+   else
+   {
+      error = initialize_without_database(params, k, io);
+   }
+
+   if (error < 0)
+   {
+      free((void *) k->words_sorted_filename);
+      free((void *) k->sequences_sorted_filename);
 
       return -1;
    }
@@ -102,29 +267,69 @@ int JH_knowledge_initialize (struct JH_knowledge k [const restrict static 1])
    return 0;
 }
 
-void JH_knowledge_get_word
+int JH_knowledge_get_word
 (
-   struct JH_knowledge k [const static 1],
-   const JH_index word_ref,
-   const JH_char * word [const restrict static 1],
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
+   const JH_index word_id,
+   JH_char * word [const restrict static 1],
    JH_index word_length [const restrict static 1],
    FILE io [const restrict static 1]
 )
 {
-   JH_knowledge_readlock_words(k, io);
+   struct JH_knowledge_word target;
 
-   *word = k->words[word_ref].word;
-   *word_length = k->words[word_ref].word_length;
+   JH_knowledge_readlock_word(k, word_id, io);
 
-   JH_knowledge_readunlock_words(k, io);
+   if
+   (
+      JH_io_read_word_from_id
+      (
+         params,
+         word_id,
+         &target,
+         io
+      )
+      < 0
+   )
+   {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
+      JH_ERROR(io, "Could not get word %u.", word_id);
+
+      return -1;
+   }
+
+   JH_knowledge_readunlock_word(k, word_id, io);
+
+   *word = calloc(target.word_length, sizeof(char));
+
+   if (*word == (char *) NULL)
+   {
+      JH_ERROR(io, "Could allocate memory to copy word %u.", word_id);
+      JH_knowledge_finalize_word(&target);
+
+      *word_length = 0;
+
+      return -1;
+   }
+
+   memcpy(*word, target.word, sizeof(char) * target.word_length);
+
+   *word_length = target.word_length;
+
+   JH_knowledge_finalize_word(&target);
+
+   return 0;
 }
 
 int JH_knowledge_rarest_word
 (
-   struct JH_knowledge k [const static 1],
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
    const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
-   JH_index word_id [const restrict static 1],
+   JH_index rarest_word_id [const restrict static 1],
    FILE io [const restrict static 1]
 )
 {
@@ -138,21 +343,61 @@ int JH_knowledge_rarest_word
 
    for (i = 0; i < sequence_length; ++i)
    {
+      struct JH_knowledge_word candidate;
+
       JH_knowledge_readlock_word(k, sequence[i], io);
+
       if
       (
-         (k->words[sequence[i]].occurrences <= current_max_score)
-         /* Otherwise we might just have learned it, or it must not be used. */
-         && (k->words[sequence[i]].occurrences > 1)
+         JH_io_read_word_from_id
+         (
+            params,
+            sequence[i],
+            &candidate,
+            io
+         )
+         < 0
       )
       {
-         current_max_score = k->words[sequence[i]].occurrences;
-         *word_id = sequence[i];
-         success = 0;
+         JH_knowledge_readunlock_word(k, sequence[i], io);
+
+         JH_ERROR(io, "Could not get word %u", sequence[i]);
+
+         return -1;
       }
 
       JH_knowledge_readunlock_word(k, sequence[i], io);
+
+      if
+      (
+         (candidate.occurrences <= current_max_score)
+         /* Otherwise we might just have learned it, or it must not be used. */
+         && (candidate.occurrences > 1)
+      )
+      {
+         current_max_score = candidate.occurrences;
+         *rarest_word_id = sequence[i];
+         success = 0;
+      }
+
+      JH_knowledge_finalize_word(&candidate);
    }
 
    return success;
+}
+
+char * JH_knowledge_get_sorted_sequences_filename
+(
+   const struct JH_knowledge k [const restrict static 1]
+)
+{
+   return k->sequences_sorted_filename;
+}
+
+char * JH_knowledge_get_sorted_words_filename
+(
+   const struct JH_knowledge k [const restrict static 1]
+)
+{
+   return k->words_sorted_filename;
 }

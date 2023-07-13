@@ -6,54 +6,23 @@
 
 #include "../error/error.h"
 
+#include "../io/io.h"
+
+#include "../parameters/parameters.h"
+
 #include "knowledge.h"
 
 /******************************************************************************/
 /** INITIALIZING STRUCTURES ***************************************************/
 /******************************************************************************/
-
-static void initialize_sequence_collection
-(
-   struct JH_knowledge_sequence_collection c [const restrict static 1]
-)
-{
-   c->sequences_ref = (struct JH_knowledge_sequence_data *) NULL;
-   c->sequences_ref_length = 0;
-   c->sequences_ref_sorted = (JH_index *) NULL;
-}
-
 static int initialize_word
 (
    struct JH_knowledge_word w [const restrict static 1]
 )
 {
-   int error;
-
-   w->word = (const JH_char *) NULL;
+   w->word = (JH_char *) NULL;
    w->word_length = 0;
    w->occurrences = 0;
-
-   initialize_sequence_collection(&(w->swt));
-   initialize_sequence_collection(&(w->tws));
-
-   error =
-      pthread_rwlock_init
-      (
-         &(w->lock),
-         (const pthread_rwlockattr_t *) NULL
-      );
-
-   if (error != 0)
-   {
-      JH_ERROR
-      (
-         stderr,
-         "Unable to initialize a knowledge's word lock: %s.",
-         strerror(error)
-      );
-
-      return -1;
-   }
 
    return 0;
 }
@@ -95,19 +64,19 @@ static JH_char * copy_word
    return result;
 }
 
-static int reallocate_words_list
+static int reallocate_word_locks_list
 (
    struct JH_knowledge k [const restrict static 1],
    FILE io [const restrict static 1]
 )
 {
-   struct JH_knowledge_word * new_words;
+   pthread_rwlock_t * new_word_locks;
 
    if
    (
       JH_index_cannot_allocate_more
       (
-         sizeof(struct JH_knowledge_word),
+         sizeof(pthread_rwlock_t),
          k->words_length
       )
    )
@@ -115,32 +84,32 @@ static int reallocate_words_list
       JH_S_ERROR
       (
          io,
-         "Unable to store the size of the words list, as it would overflow "
-         "size_t variables."
+         "Unable to store the size of the word locks list, as it would "
+         "overflow size_t variables."
       );
 
       return -1;
    }
 
-   new_words =
-      (struct JH_knowledge_word *) realloc
+   new_word_locks =
+      (pthread_rwlock_t *) realloc
       (
-         (void *) k->words,
-         (((size_t) k->words_length) * sizeof(struct JH_knowledge_word))
+         (void *) k->word_locks,
+         (((size_t) k->words_length) * sizeof(pthread_rwlock_t))
       );
 
-   if (new_words == (struct JH_knowledge_word *) NULL)
+   if (new_word_locks == (pthread_rwlock_t *) NULL)
    {
       JH_S_ERROR
       (
          io,
-         "Unable to allocate the memory required for the new words list."
+         "Unable to allocate the memory required for the new word locks list."
       );
 
       return -1;
    }
 
-   k->words = new_words;
+   k->word_locks = new_word_locks;
 
    return 0;
 }
@@ -220,6 +189,7 @@ static void set_nth_word
 
 static int add_word
 (
+   const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
    const JH_char word [const restrict static 1],
    const JH_index word_length,
@@ -228,6 +198,8 @@ static int add_word
    FILE io [const restrict static 1]
 )
 {
+   int error;
+   struct JH_knowledge_word new_word;
    JH_char * stored_word;
 
    if (k->words_length == JH_INDEX_MAX)
@@ -251,17 +223,37 @@ static int add_word
 
    k->words_length += 1;
 
-   if (reallocate_words_list(k, io) < 0)
+   if (reallocate_word_locks_list(k, io) < 0)
    {
+      k->words_length -= 1;
+
+      free((void *) stored_word);
+
+      return -1;
+   }
+
+   initialize_word(&new_word);
+
+   new_word.word = stored_word;
+   new_word.word_length = word_length;
+
+   if (JH_io_generate_word_directory_from_id(params, word_id, io) < 0)
+   {
+      JH_knowledge_finalize_word(&new_word);
       k->words_length -= 1;
 
       return -1;
    }
 
-   initialize_word(k->words + word_id);
+   if (JH_io_write_word_from_id(params, word_id, &new_word, io) < 0)
+   {
+      JH_knowledge_finalize_word(&new_word);
+      k->words_length -= 1;
 
-   k->words[word_id].word = stored_word;
-   k->words[word_id].word_length = word_length;
+      return -1;
+   }
+
+   JH_knowledge_finalize_word(&new_word);
 
    if (reallocate_words_sorted_list(k, io) < 0)
    {
@@ -272,6 +264,34 @@ static int add_word
 
    set_nth_word(k, sorted_word_id, word_id);
 
+   JH_io_write_sorted_words
+   (
+      k->words_sorted_filename,
+      k->words_length,
+      k->words_sorted,
+      io
+   );
+
+   error =
+      pthread_rwlock_init
+      (
+         (k->word_locks + word_id),
+         (const pthread_rwlockattr_t *) NULL
+      );
+
+   if (error != 0)
+   {
+      JH_ERROR
+      (
+         io,
+         "Unable to initialize knowledge's word %u lock: %s.",
+         word_id,
+         strerror(error)
+      );
+
+      return -1;
+   }
+
    return 0;
 }
 
@@ -281,6 +301,7 @@ static int add_word
 
 int JH_knowledge_learn_word
 (
+   const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
    const JH_char word [const restrict static 1],
    const size_t word_length,
@@ -288,7 +309,8 @@ int JH_knowledge_learn_word
    FILE io [const restrict static 1]
 )
 {
-   JH_index sorted_id;
+   int i;
+   JH_index sorted_ix;
 
    if (word_length >= (size_t) JH_INDEX_MAX)
    {
@@ -299,19 +321,32 @@ int JH_knowledge_learn_word
 
    JH_knowledge_readlock_words(k, io);
 
-   if
-   (
-      JH_knowledge_find_word_id
+   i =
+      JH_knowledge_find_word
       (
+         params,
          k,
          word,
          (((size_t) word_length) * sizeof(JH_char)),
-         word_id
-      ) == 0
-   )
-   {
-      JH_knowledge_readunlock_words(k, io);
+         word_id,
+         &sorted_ix,
+         io
+      );
 
+   /*
+    * We may need to write, but we currently have reading access.
+    * We can't get the writing access while someone (even us) has the reading
+    * access, so we release the reading access in any case.
+    */
+   JH_knowledge_readunlock_words(k, io);
+
+   if (i < 0)
+   {
+      return -1;
+   }
+
+   if (i == 1)
+   {
       JH_DEBUG
       (
          io,
@@ -324,28 +359,31 @@ int JH_knowledge_learn_word
       return 0;
    }
 
-   /*
-    * We need to write, but we currently have reading access.
-    * We can't get the writing access while someone (even us) has the reading
-    * access, so we release the reading access.
-    */
-   JH_knowledge_readunlock_words(k, io);
-
    JH_knowledge_writelock_words(k, io);
    /*
     * Now we have writer access, but someone else might have modified 'k' before
     * we did, so we need to find the word's location again.
     */
-   if
-   (
-      JH_knowledge_find_word_id
+   i =
+      JH_knowledge_find_word
       (
+         params,
          k,
          word,
          (((size_t) word_length) * sizeof(JH_char)),
-         word_id
-      ) == 0
-   )
+         word_id,
+         &sorted_ix,
+         io
+      );
+
+   if (i < 0)
+   {
+      JH_knowledge_writeunlock_words(k, io);
+
+      return -1;
+   }
+
+   if (i == 1)
    {
       JH_knowledge_writeunlock_words(k, io);
 
@@ -361,20 +399,32 @@ int JH_knowledge_learn_word
       return 0;
    }
 
-   sorted_id = *word_id;
    *word_id = k->words_length;
 
    JH_DEBUG
    (
       io,
       JH_DEBUG_KNOWLEDGE_LEARN_WORD,
-      "Learning new word of size %u (id: %u, sorted_id: %u).",
+      "Learning new word of size %u (id: %u, sorted_ix: %u).",
       (JH_index) word_length,
       *word_id,
-      sorted_id
+      sorted_ix
    );
 
-   if (add_word(k, word, (JH_index) word_length, *word_id, sorted_id, io) < 0)
+   if
+   (
+      add_word
+      (
+         params,
+         k,
+         word,
+         (JH_index) word_length,
+         *word_id,
+         sorted_ix,
+         io
+      )
+      < 0
+   )
    {
       JH_knowledge_writeunlock_words(k, io);
 

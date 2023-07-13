@@ -100,7 +100,7 @@ int JH_server_initialize
       return -1;
    }
 
-   if (JH_knowledge_initialize(&(server->k)) < 0)
+   if (JH_knowledge_initialize(params, &(server->k), stderr) < 0)
    {
       finalize_worker_collection(&(server->workers));
 

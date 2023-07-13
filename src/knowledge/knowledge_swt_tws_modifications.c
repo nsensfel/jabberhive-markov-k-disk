@@ -4,346 +4,432 @@
 
 #include "../error/error.h"
 
+#include "../io/io.h"
+
+#include "../parameters/parameters.h"
+
 #include "knowledge.h"
 
 static int add_target
 (
-   struct JH_knowledge_sequence_data sd [const restrict static 1],
+   const struct JH_parameters params [const restrict static 1],
+   const JH_index word_id,
+   const JH_index adjacent_sequence_ix,
+   const bool is_swt,
    const JH_index target_id,
    const JH_index t_index,
    FILE io [const restrict static 1]
 )
 {
-   struct JH_knowledge_target * new_p;
+   struct JH_knowledge_target target;
+   struct JH_knowledge_adjacent_sequence as;
+   JH_index length;
 
-   /* (sd->targets_length == JH_INDEX_MAX) => target_id \in sd->targets. */
-
-   sd->targets_length += 1;
-
-   new_p =
-      (struct JH_knowledge_target *) realloc
+   // FIXME: can optimize filename generation.
+   if
+   (
+      JH_io_read_adjacent_sequence_from_id
       (
-         (void *) sd->targets,
-         (sd->targets_length * sizeof(struct JH_knowledge_target))
-      );
-
-   if (new_p == (struct JH_knowledge_target *) NULL)
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         &as,
+         io
+      )
+      < 0
+   )
    {
-      JH_S_ERROR
-      (
-         io,
-         "[E] Unable to allocate memory required to store more targets."
-      );
+      return -1;
+   }
 
-      sd->targets_length -= 1;
+   /* (as->targets_length == JH_INDEX_MAX) => target_id \in as->targets. */
+
+   as.targets_length += 1;
+
+   length = as.targets_length;
+
+   if
+   (
+      JH_io_write_adjacent_sequence_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         &as,
+         io
+      )
+      < 0
+   )
+   {
+      JH_knowledge_finalize_adjacent_sequence(&as);
 
       return -1;
    }
 
-   sd->targets = new_p;
+   JH_knowledge_finalize_adjacent_sequence(&as);
 
-   if (t_index != (sd->targets_length - 1))
+   if (t_index != (length - 1))
    {
-      memmove
+      if
       (
-         (void *) (sd->targets + t_index + 1),
-         (const void *) (sd->targets + t_index),
-         (size_t)
+         JH_io_shift_sequence_target_from_id
          (
-            ((sd->targets_length - t_index) - 1)
-            * sizeof(struct JH_knowledge_target)
+            params,
+            word_id,
+            adjacent_sequence_ix,
+            is_swt,
+            t_index,
+            length,
+            io
          )
-      );
+         < 0
+      )
+      {
+         return -1;
+      }
    }
 
-   sd->targets[t_index].id = target_id;
-   sd->targets[t_index].occurrences = 0;
+   if
+   (
+      JH_io_read_sequence_target_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         t_index,
+         &target,
+         io
+      )
+      < 0
+   )
+   {
+      return -1;
+   }
+
+   target.id = target_id;
+   target.occurrences = 0;
+
+   if
+   (
+      JH_io_write_sequence_target_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         t_index,
+         &target,
+         io
+      )
+      < 0
+   )
+   {
+      return -1;
+   }
 
    return 0;
 }
 
-static int add_sequence
+static int add_adjacent_sequence
 (
-   struct JH_knowledge_sequence_collection sc [const restrict static 1],
+   const struct JH_parameters params [const restrict static 1],
+   const JH_index word_id,
+   const JH_index adjacent_sequence_ix,
+   const bool is_swt,
    const JH_index sequence_id,
-   JH_index s_index [const restrict static 1],
    FILE io [const restrict static 1]
 )
 {
-   struct JH_knowledge_sequence_data * new_p;
-   JH_index * new_ps;
+   JH_index new_length;
+   struct JH_knowledge_word word;
+   struct JH_knowledge_adjacent_sequence as;
 
-   /*
-    * (sc->sequences_ref_length == JH_INDEX_MAX) =>
-    *    sequence_id \in sc->sequences_ref.
-    */
-
-   sc->sequences_ref_length += 1;
-
-   new_p =
-      (struct JH_knowledge_sequence_data *) realloc
-      (
-         (void *) sc->sequences_ref,
-         (sc->sequences_ref_length * sizeof(struct JH_knowledge_sequence_data))
-      );
-
-   if (new_p == (struct JH_knowledge_sequence_data *) NULL)
+   if (JH_io_read_word_from_id(params, word_id, &word, io) < 0)
    {
-      JH_S_ERROR
-      (
-         io,
-         "[E] Unable to allocate memory required to store new preceding or "
-         " following sequence."
-      );
-
-      sc->sequences_ref_length -= 1;
-
       return -1;
    }
 
-   sc->sequences_ref = new_p;
-
-   new_ps =
-      (JH_index *) realloc
-      (
-         (void *) sc->sequences_ref_sorted,
-         (sc->sequences_ref_length * sizeof(JH_index))
-      );
-
-   if (new_p == (struct JH_knowledge_sequence_data *) NULL)
+   if (is_swt)
    {
-      JH_S_ERROR
-      (
-         io,
-         "[E] Unable to allocate memory required to store new preceding or "
-         " following sequence."
-      );
-
-      sc->sequences_ref_length -= 1;
-
-      return -1;
+      word.swt_sequences_ref_length += 1;
+      new_length = word.swt_sequences_ref_length;
+   }
+   else
+   {
+      word.tws_sequences_ref_length += 1;
+      new_length = word.tws_sequences_ref_length;
    }
 
-   sc->sequences_ref_sorted = new_ps;
-
-   if (*s_index != (sc->sequences_ref_length - 1))
+   if (JH_io_write_word_from_id(params, word_id, &word, io) < 0)
    {
-      memmove
-      (
-         (void *) (sc->sequences_ref_sorted + (*s_index) + 1),
-         (const void *) (sc->sequences_ref_sorted + (*s_index)),
-         (size_t)
-         (
-            ((sc->sequences_ref_length - (*s_index)) - 1)
-            * sizeof(JH_index)
-         )
-      );
+      JH_knowledge_finalize_word(&word);
+
+      return -2;
    }
 
-   sc->sequences_ref_sorted[*s_index] = (sc->sequences_ref_length - 1);
-   *s_index = (sc->sequences_ref_length - 1);
+   JH_knowledge_finalize_word(&word);
 
-   sc->sequences_ref[*s_index].id = sequence_id;
-   sc->sequences_ref[*s_index].occurrences = 0;
-   sc->sequences_ref[*s_index].targets = (struct JH_knowledge_target *) NULL;
-   sc->sequences_ref[*s_index].targets_length = 0;
+   if
+   (
+      JH_io_shift_adjacent_sequence_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         new_length,
+         io
+      )
+      < 0
+   )
+   {
+      return -3;
+   }
+
+   as.id = sequence_id;
+   as.occurrences = 0;
+   as.targets_length = 0;
+
+   if
+   (
+      JH_io_write_adjacent_sequence_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         &as,
+         io
+      )
+      < 0
+   )
+   {
+      return -4;
+   }
 
    return 0;
 }
 
-int JH_knowledge_strengthen_swt
+int JH_knowledge_strengthen_adjacent_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
    const JH_index sequence_id,
    const JH_index word_id,
    const JH_index target_id,
+   const bool is_swt,
    FILE io [const restrict static 1]
 )
 {
-   JH_index s_index, t_index;
+   int i;
+   JH_index t_index;
+   struct JH_knowledge_target target;
+   struct JH_knowledge_adjacent_sequence as;
+   JH_index adjacent_sequence_ix;
 
    JH_knowledge_writelock_word(k, word_id, io);
 
-   if
-   (
-      JH_knowledge_find_markov_sequence
+   i =
+      JH_knowledge_find_adjacent_sequence
       (
+         params,
          sequence_id,
-         &(k->words[word_id].swt),
-         &s_index
-      ) < 0
-   )
-   {
-      if
-      (
-         add_sequence
-         (
-            &(k->words[word_id].swt),
-            sequence_id,
-            &s_index,
-            io
-         ) < 0
-      )
-      {
-         JH_knowledge_writeunlock_word(k, word_id, io);
-
-         return -1;
-      }
-   }
-
-   if
-   (
-      JH_knowledge_find_sequence_target
-      (
-         target_id,
-         (k->words[word_id].swt.sequences_ref + s_index),
-         &t_index
-      ) < 0
-   )
-   {
-      if
-      (
-         add_target
-         (
-            &(k->words[word_id].swt.sequences_ref[s_index]),
-            target_id,
-            t_index,
-            io
-         ) < 0
-      )
-      {
-         JH_knowledge_writeunlock_word(k, word_id, io);
-
-         return -1;
-      }
-   }
-
-   if
-   (
-      (
-         k->words[word_id].swt.sequences_ref[s_index].occurrences
-         == JH_INDEX_MAX
-      )
-      ||
-      (
-         k->words[word_id].swt.sequences_ref[s_index].targets[t_index].occurrences
-         == JH_INDEX_MAX
-      )
-   )
-   {
-      JH_S_WARNING
-      (
-         io,
-         "[W] Unable to strengthen SWT link: link is already at max strength."
+         word_id,
+         is_swt,
+         &adjacent_sequence_ix,
+         io
       );
 
-      JH_knowledge_writeunlock_word(k, word_id, io);
-
-      return 1;
-   }
-
-   k->words[word_id].swt.sequences_ref[s_index].occurrences += 1;
-   k->words[word_id].swt.sequences_ref[s_index].targets[t_index].occurrences += 1;
-
-   JH_knowledge_writeunlock_word(k, word_id, io);
-
-   return 0;
-}
-
-int JH_knowledge_strengthen_tws
-(
-   struct JH_knowledge k [const restrict static 1],
-   const JH_index target_id,
-   const JH_index word_id,
-   const JH_index sequence_id,
-   FILE io [const restrict static 1]
-)
-{
-   JH_index s_index, t_index;
-
-   JH_knowledge_writelock_word(k, word_id, io);
-
-   if
-   (
-      JH_knowledge_find_markov_sequence
-      (
-         sequence_id,
-         &(k->words[word_id].tws),
-         &s_index
-      ) < 0
-   )
+   if (i < 0)
    {
-      if
-      (
-         add_sequence
-         (
-            &(k->words[word_id].tws),
-            sequence_id,
-            &s_index,
-            io
-         ) < 0
-      )
-      {
-         JH_knowledge_writeunlock_word(k, word_id, io);
-
-         return -1;
-      }
-   }
-
-   if
-   (
-      JH_knowledge_find_sequence_target
-      (
-         target_id,
-         (k->words[word_id].tws.sequences_ref + s_index),
-         &t_index
-      ) < 0
-   )
-   {
-      if
-      (
-         add_target
-         (
-            &(k->words[word_id].tws.sequences_ref[s_index]),
-            target_id,
-            t_index,
-            io
-         ) < 0
-      )
-      {
-         JH_knowledge_writeunlock_word(k, word_id, io);
-
-         return -1;
-      }
-   }
-
-   if
-   (
-      (
-         k->words[word_id].tws.sequences_ref[s_index].occurrences
-         == JH_INDEX_MAX
-      )
-      ||
-      (
-         k->words[word_id].tws.sequences_ref[s_index].targets[t_index].occurrences
-         == JH_INDEX_MAX
-      )
-   )
-   {
-      JH_S_ERROR
-      (
-         io,
-         "[E] Unable to strengthen TWS link: link is already at max strength."
-      );
-
       JH_knowledge_writeunlock_word(k, word_id, io);
 
       return -1;
    }
 
-   k->words[word_id].tws.sequences_ref[s_index].occurrences += 1;
-   k->words[word_id].tws.sequences_ref[s_index].targets[t_index].occurrences += 1;
+   if (i == 0)
+   {
+      if
+      (
+         add_adjacent_sequence
+         (
+            params,
+            word_id,
+            adjacent_sequence_ix,
+            is_swt,
+            sequence_id,
+            io
+         )
+         < 0
+      )
+      {
+         JH_knowledge_writeunlock_word(k, word_id, io);
 
+         return -1;
+      }
+   }
+
+   i =
+      JH_knowledge_find_sequence_target
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         target_id,
+         &t_index,
+         io
+      );
+
+   if (i < 0)
+   {
+      JH_knowledge_writeunlock_word(k, word_id, io);
+
+      return -1;
+   }
+
+   if (i == 0)
+   {
+      if
+      (
+         add_target
+         (
+            params,
+            word_id,
+            adjacent_sequence_ix,
+            is_swt,
+            target_id,
+            t_index,
+            io
+         )
+         < 0
+      )
+      {
+         JH_knowledge_writeunlock_word(k, word_id, io);
+
+         return -1;
+      }
+   }
+
+   if
+   (
+      JH_io_read_adjacent_sequence_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         &as,
+         io
+      )
+      < 0
+   )
+   {
+      JH_knowledge_writeunlock_word(k, word_id, io);
+
+      return -1;
+   }
+
+   if (as.occurrences == JH_INDEX_MAX)
+   {
+      JH_knowledge_writeunlock_word(k, word_id, io);
+      JH_knowledge_finalize_adjacent_sequence(&as);
+
+      JH_S_ERROR
+      (
+         io,
+         "[E] Unable to strengthen link: link is already at max strength."
+      );
+
+      return -1;
+
+   }
+
+   as.occurrences += 1;
+
+   if
+   (
+      JH_io_write_adjacent_sequence_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         &as,
+         io
+      )
+      < 0
+   )
+   {
+      JH_knowledge_writeunlock_word(k, word_id, io);
+      JH_knowledge_finalize_adjacent_sequence(&as);
+
+      return -1;
+   }
+
+   JH_knowledge_finalize_adjacent_sequence(&as);
+
+   if
+   (
+      JH_io_read_sequence_target_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         t_index,
+         &target,
+         io
+      )
+      < 0
+   )
+   {
+      JH_knowledge_writeunlock_word(k, word_id, io);
+
+      return -1;
+   }
+
+   if (target.occurrences == JH_INDEX_MAX)
+   {
+      JH_S_ERROR
+      (
+         io,
+         "[E] Unable to strengthen link: link is already at max strength."
+      );
+
+      JH_knowledge_writeunlock_word(k, word_id, io);
+      JH_knowledge_finalize_sequence_target(&target);
+
+      return -1;
+   }
+
+   target.occurrences += 1;
+
+   if
+   (
+      JH_io_write_sequence_target_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         t_index,
+         &target,
+         io
+      )
+      < 0
+   )
+   {
+      JH_knowledge_writeunlock_word(k, word_id, io);
+      JH_knowledge_finalize_sequence_target(&target);
+
+      return -1;
+   }
+
+   JH_knowledge_finalize_sequence_target(&target);
    JH_knowledge_writeunlock_word(k, word_id, io);
 
    return 0;

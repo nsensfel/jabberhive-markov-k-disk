@@ -6,6 +6,10 @@
 
 #include "../error/error.h"
 
+#include "../io/io.h"
+
+#include "../parameters/parameters.h"
+
 #include "knowledge.h"
 
 /******************************************************************************/
@@ -41,6 +45,7 @@ static void parse_swt_sequence
 
 static int add_swt_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
    const JH_index sequence [const restrict static 1],
    const size_t index,
@@ -58,9 +63,9 @@ static int add_swt_sequence
    (
       JH_knowledge_learn_markov_sequence
       (
+         params,
          k,
          buffer,
-         (buffer_length + 1),
          &sequence_id,
          io
       ) < 0
@@ -72,24 +77,28 @@ static int add_swt_sequence
    if (index == (sequence_length - 1))
    {
       return
-         JH_knowledge_strengthen_swt
+         JH_knowledge_strengthen_adjacent_sequence
          (
+            params,
             k,
             sequence_id,
             sequence[index],
             JH_END_OF_SEQUENCE_ID,
+            /* is_swt = */ true,
             io
          );
    }
    else
    {
       return
-         JH_knowledge_strengthen_swt
+         JH_knowledge_strengthen_adjacent_sequence
          (
+            params,
             k,
             sequence_id,
             sequence[index],
             sequence[index + 1],
+            /* is_swt = */ true,
             io
          );
    }
@@ -127,6 +136,7 @@ static void parse_tws_sequence
 
 static int add_tws_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
    const JH_index sequence [const restrict static 1],
    const size_t index,
@@ -144,9 +154,9 @@ static int add_tws_sequence
    (
       JH_knowledge_learn_markov_sequence
       (
+         params,
          k,
          buffer,
-         (buffer_length + 1),
          &sequence_id,
          io
       ) < 0
@@ -158,24 +168,28 @@ static int add_tws_sequence
    if (index == 0)
    {
       return
-         JH_knowledge_strengthen_tws
+         JH_knowledge_strengthen_adjacent_sequence
          (
+            params,
             k,
             JH_START_OF_SEQUENCE_ID,
             sequence[index],
             sequence_id,
+            /* is_swt = */ false,
             io
          );
    }
    else
    {
       return
-         JH_knowledge_strengthen_tws
+         JH_knowledge_strengthen_adjacent_sequence
          (
+            params,
             k,
             sequence[index - 1],
             sequence[index],
             sequence_id,
+            /* is_swt = */ false,
             io
          );
    }
@@ -186,16 +200,16 @@ static int add_tws_sequence
 /******************************************************************************/
 int JH_knowledge_learn_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
    const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
-   const JH_index markov_order,
    FILE io [const restrict static 1]
 )
 {
    JH_index * buffer;
    size_t i;
-   const JH_index buffer_length = (markov_order - 1);
+   const JH_index buffer_length = (JH_parameters_get_markov_order(params) - 1);
 
    buffer =
       (JH_index *) calloc
@@ -217,10 +231,14 @@ int JH_knowledge_learn_sequence
 
    for (i = 0; i < sequence_length; ++i)
    {
+      char * word_filename;
+      struct JH_knowledge_word word;
+
       if
       (
          add_swt_sequence
          (
+            params,
             k,
             sequence,
             i,
@@ -239,6 +257,7 @@ int JH_knowledge_learn_sequence
       (
          add_tws_sequence
          (
+            params,
             k,
             sequence,
             i,
@@ -254,8 +273,44 @@ int JH_knowledge_learn_sequence
 
       JH_knowledge_writelock_word(k, sequence[i], io);
 
-      k->words[sequence[i]].occurrences += 1;
+      if
+      (
+         JH_io_generate_word_filename
+         (
+            params,
+            sequence[i],
+            &word_filename,
+            io
+         )
+         < 0
+      )
+      {
+         JH_knowledge_writeunlock_word(k, sequence[i], io);
 
+         return -1;
+      }
+
+      if (JH_io_read_word(word_filename, &word, io) < 0)
+      {
+         free((void *) word_filename);
+         JH_knowledge_writeunlock_word(k, sequence[i], io);
+
+         return -1;
+      }
+
+      word.occurrences += 1;
+
+      if (JH_io_write_word(word_filename, &word, io) < 0)
+      {
+         JH_knowledge_finalize_word(&word);
+         free((void *) word_filename);
+         JH_knowledge_writeunlock_word(k, sequence[i], io);
+
+         return -1;
+      }
+
+      JH_knowledge_finalize_word(&word);
+      free((void *) word_filename);
       JH_knowledge_writeunlock_word(k, sequence[i], io);
    }
 

@@ -2,75 +2,61 @@
 
 #include "knowledge.h"
 
-/*@
-   requires \valid(sd);
-@*/
-static void knowledge_sequence_data_finalize
+void JH_knowledge_finalize_sequence_target
 (
-   struct JH_knowledge_sequence_data sd [const restrict static 1]
+   const struct JH_knowledge_target target [const restrict static 1]
 )
 {
-   sd->occurrences = 0;
-
-   if (sd->targets != (struct JH_knowledge_target *) NULL)
-   {
-      free((void *) sd->targets);
-
-      sd->targets = (struct JH_knowledge_target *) NULL;
-   }
-
-   sd->targets_length = 0;
-
+   (void) target;
 }
 
-static void knowledge_sequence_collection_finalize
+void JH_knowledge_finalize_adjacent_sequence
 (
-   struct JH_knowledge_sequence_collection c [const restrict static 1]
+   const struct JH_knowledge_adjacent_sequence as [const restrict static 1]
 )
 {
-   JH_index i;
-
-   for (i = 0; i < c->sequences_ref_length; ++i)
-   {
-      knowledge_sequence_data_finalize(c->sequences_ref + i);
-   }
-
-   if (c->sequences_ref != (struct JH_knowledge_sequence_data *) NULL)
-   {
-      free((void *) c->sequences_ref);
-
-      c->sequences_ref = (struct JH_knowledge_sequence_data *) NULL;
-   }
-
-   if (c->sequences_ref_sorted != (JH_index *) NULL)
-   {
-      free((void *) c->sequences_ref_sorted);
-
-      c->sequences_ref_sorted = (JH_index *) NULL;
-   }
-
-   c->sequences_ref_length = 0;
+   (void) as;
 }
 
-static void knowledge_word_finalize
+/*
+void JH_knowledge_finalize_sequence_collection
 (
-   struct JH_knowledge_word w [const restrict static 1]
+   const struct JH_knowledge_sequence_collection sc [const restrict static 1]
 )
 {
-   w->word_length = 0;
-   w->occurrences = 0;
-
-   if (w->word != (JH_char *) NULL)
+   if (sc->sequences_ref_sorted != (JH_index *) NULL)
    {
-      free((void *) w->word);
+      free((void *) sc->sequences_ref_sorted);
 
-      w->word = (JH_char *) NULL;
+      sc->sequences_ref_sorted = (JH_index *) NULL;
    }
+}
+*/
 
-   knowledge_sequence_collection_finalize(&(w->swt));
-   knowledge_sequence_collection_finalize(&(w->tws));
+void JH_knowledge_finalize_sequence
+(
+   JH_index * sequence [const restrict static 1]
+)
+{
+   if (*sequence != (JH_index *) NULL)
+   {
+      free((void *) *sequence);
 
-   pthread_rwlock_destroy(&(w->lock));
+      *sequence = (JH_index *) NULL;
+   }
+}
+
+void JH_knowledge_finalize_word
+(
+   struct JH_knowledge_word word [const restrict static 1]
+)
+{
+   if (word->word != (char *) NULL)
+   {
+      free((void *) word->word);
+
+      word->word = (char *) NULL;
+   }
 }
 
 /* See: "knowledge.h" */
@@ -78,19 +64,17 @@ void JH_knowledge_finalize (struct JH_knowledge k [const restrict static 1])
 {
    JH_index i;
 
-   for (i = 0; i < k->words_length; ++i)
+   if (k->word_locks != (pthread_rwlock_t *) NULL)
    {
-      knowledge_word_finalize(k->words + i);
+      for (i = 0; i < k->words_length; ++i)
+      {
+         pthread_rwlock_destroy(k->word_locks + i);
+      }
+
+      free((void *) k->word_locks);
    }
 
    k->words_length = 0;
-
-   if (k->words != (struct JH_knowledge_word *) NULL)
-   {
-      free((void *) k->words);
-
-      k->words = (struct JH_knowledge_word *) NULL;
-   }
 
    if (k->words_sorted != (JH_index *) NULL)
    {
@@ -99,19 +83,7 @@ void JH_knowledge_finalize (struct JH_knowledge k [const restrict static 1])
       k->words_sorted = (JH_index *) NULL;
    }
 
-   for (i = 0; i < k->sequences_length; ++i)
-   {
-      free((void *) k->sequences[i]);
-   }
-
    k->sequences_length = 0;
-
-   if (k->sequences != (JH_index **) NULL)
-   {
-      free((void *) k->sequences);
-
-      k->sequences = (JH_index **) NULL;
-   }
 
    if (k->sequences_sorted != (JH_index *) NULL)
    {

@@ -18,6 +18,7 @@
 
 static int add_word_to_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    const JH_char string [const restrict static 1],
    const size_t word_start,
    const size_t word_length,
@@ -34,6 +35,7 @@ static int add_word_to_sequence
    (
       JH_knowledge_learn_word
       (
+         params,
          k,
          (string + word_start),
          word_length,
@@ -105,6 +107,7 @@ static int find_word
 /* See: "sequence.h" */
 int JH_sequence_from_undercase_string
 (
+   const struct JH_parameters params [const restrict static 1],
    const JH_char string [const restrict],
    const size_t string_length,
    struct JH_knowledge k [const restrict static 1],
@@ -173,6 +176,7 @@ int JH_sequence_from_undercase_string
       (
          add_word_to_sequence
          (
+            params,
             string,
             word_start,
             word_length,

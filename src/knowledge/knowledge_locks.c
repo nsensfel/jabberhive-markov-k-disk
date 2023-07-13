@@ -229,7 +229,7 @@ int JH_knowledge_readlock_word
       return -1;
    }
 
-   err = pthread_rwlock_rdlock(&(k->words[i].lock));
+   err = pthread_rwlock_rdlock(k->word_locks + i);
 
    if (err != 0)
    {
@@ -261,7 +261,7 @@ int JH_knowledge_writelock_word
    }
 
 
-   err = pthread_rwlock_wrlock(&(k->words[i].lock));
+   err = pthread_rwlock_wrlock(k->word_locks + i);
 
    if (err != 0)
    {
@@ -289,7 +289,7 @@ int JH_knowledge_readunlock_word
    int err;
 
 
-   err = pthread_rwlock_unlock(&(k->words[i].lock));
+   err = pthread_rwlock_unlock(k->word_locks + i);
 
    if (err != 0)
    {
@@ -322,7 +322,7 @@ int JH_knowledge_writeunlock_word
 {
    int err;
 
-   err = pthread_rwlock_unlock(&(k->words[i].lock));
+   err = pthread_rwlock_unlock(k->word_locks + i);
 
    if (err != 0)
    {

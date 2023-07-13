@@ -53,7 +53,8 @@ enum JH_invocation_objective JH_parameters_initialize
 (
    struct JH_parameters param [const restrict static 1],
    int const argc,
-   const char * argv [const static argc]
+   // FIXME: GCC bug with const below. Fixed in 11.3
+   const char * argv [const static /*argc*/ 4]
 )
 {
    param->session = (const char *) NULL;
@@ -61,8 +62,9 @@ enum JH_invocation_objective JH_parameters_initialize
 
    switch (argc)
    {
-      case 3:
+      case 4:
          param->session = argv[1];
+         param->database_path = argv[3];
 
          if (parse_markov_order(param, argv[2]) < 0)
          {
@@ -89,6 +91,14 @@ const char * JH_parameters_get_session_name
 )
 {
    return param->session;
+}
+
+const char * JH_parameters_get_database_path
+(
+   const struct JH_parameters param [const restrict static 1]
+)
+{
+   return param->database_path;
 }
 
 JH_index JH_parameters_get_markov_order

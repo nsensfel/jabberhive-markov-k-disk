@@ -5,17 +5,24 @@
 
 #include "../sequence/sequence.h"
 
+#include "../parameters/parameters.h"
+
 #include "../error/error.h"
+
+#include "../io/io.h"
 
 #include "knowledge.h"
 
 static int weighted_random_pick
 (
-   const struct JH_knowledge_sequence_collection sc [const restrict static 1],
+   const struct JH_parameters params [const restrict static 1],
+   const JH_index word_id,
    const JH_index sum,
-   JH_index result [const restrict static 1]
+   JH_index resulting_id [const restrict static 1],
+   FILE io [const restrict static 1]
 )
 {
+   JH_index resulting_ix;
    JH_index accumulator, random_number;
 
    accumulator = 0;
@@ -28,49 +35,96 @@ static int weighted_random_pick
    random_number = JH_index_random_up_to(sum);
    /*@ ensures (0 <= random_number <= weights_sum); @*/
 
-   *result = 0;
+   resulting_ix = 0;
+   *resulting_id = 0;
 
    for (;;)
    {
-      accumulator += sc->sequences_ref[*result].occurrences;
+      struct JH_knowledge_adjacent_sequence as;
+
+      if
+      (
+         JH_io_read_adjacent_sequence_from_id
+         (
+            params,
+            word_id,
+            resulting_ix,
+            /* is_prefix = */ true,
+            &as,
+            io
+         )
+         < 0
+      )
+      {
+         JH_ERROR
+         (
+            io,
+            "Could not read sequence data file {word: %u, swt sequence: %u}.",
+            word_id,
+            resulting_ix
+         );
+
+         return -1;
+      }
+
+      accumulator += as.occurrences;
 
       if (accumulator < random_number)
       {
-         *result += 1;
+         resulting_ix += 1;
+
+         JH_knowledge_finalize_adjacent_sequence(&as);
       }
       else
       {
-         *result = sc->sequences_ref[*result].id;
+         *resulting_id = as.id;
+
+         JH_knowledge_finalize_adjacent_sequence(&as);
 
          return 0;
       }
    }
 }
 
-int JH_knowledge_copy_random_swt_sequence
+int JH_knowledge_copy_random_prefix
 (
-   struct JH_knowledge k [const static 1],
-   JH_index sequence [const restrict static 1],
+   const struct JH_parameters params [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
    const JH_index word_id,
-   const JH_index markov_order,
+   JH_index copied_prefix [const restrict static 1],
    FILE io [const restrict static 1]
 )
 {
-   JH_index sequence_id;
+   struct JH_knowledge_word word;
+   JH_index * prefix_sequence;
+   JH_index prefix_sequence_id;
 
    JH_knowledge_readlock_word(k, word_id, io);
+
+   if (JH_io_read_word_from_id(params, word_id, &word, io) < 0)
+   {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
+      JH_ERROR(io, "Could not get word %u", word_id);
+
+      return -1;
+   }
 
    if
    (
       weighted_random_pick
       (
-         &(k->words[word_id].swt),
-         k->words[word_id].occurrences,
-         &sequence_id
+         params,
+         word_id,
+         word.occurrences,
+         &prefix_sequence_id,
+         io
       )
       < 0
    )
    {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
       JH_S_PROG_ERROR
       (
          io,
@@ -78,23 +132,38 @@ int JH_knowledge_copy_random_swt_sequence
          "linked to a word that has been picked as being an acceptable pillar."
       );
 
-      JH_knowledge_readunlock_word(k, word_id, io);
+      JH_knowledge_finalize_word(&word);
 
       return -1;
    }
 
    JH_knowledge_readunlock_word(k, word_id, io);
+   JH_knowledge_finalize_word(&word);
 
-   JH_knowledge_readlock_sequences(k, io);
+   if
+   (
+      JH_io_read_sequence_from_id
+      (
+         params,
+         prefix_sequence_id,
+         &prefix_sequence,
+         io
+      )
+      < 0
+   )
+   {
+      return -1;
+   }
 
    memcpy
    (
-      (void *) sequence,
-      (const void *) k->sequences[sequence_id],
-      (((size_t) (markov_order - 1)) * sizeof(JH_index))
+      (void *) copied_prefix,
+      (const void *) prefix_sequence,
+      (
+         ((size_t) (JH_parameters_get_markov_order(params) - 1))
+         * sizeof(JH_index)
+      )
    );
-
-   JH_knowledge_readunlock_sequences(k, io);
 
    return 0;
 }

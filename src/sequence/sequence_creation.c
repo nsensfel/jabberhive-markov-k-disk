@@ -1,5 +1,6 @@
-#include <stdlib.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdint.h> /* defines SIZE_MAX */
 
@@ -35,15 +36,15 @@
  */
 static int extend_left
 (
+   const struct JH_parameters params [const restrict static 1],
    JH_index * sequence [const restrict static 1],
    size_t sequence_capacity [const restrict static 1],
    size_t sequence_length [const restrict static 1],
-   const JH_index markov_order,
    struct JH_knowledge k [const restrict static 1],
    FILE io [const restrict static 1]
 )
 {
-   JH_index sequence_id, word_id;
+   JH_index sequence_id, expected_sequence_ix, word_id;
 
    /* preceding_words_weights_sum > 0 */
 
@@ -53,10 +54,12 @@ static int extend_left
    (
       JH_knowledge_find_sequence
       (
+         params,
          k,
          ((*sequence) + 1),
-         markov_order,
-         &sequence_id
+         &sequence_id,
+         &expected_sequence_ix,
+         io
       ) < 0
    )
    {
@@ -71,12 +74,14 @@ static int extend_left
 
    if
    (
-      JH_knowledge_random_tws_target
+      JH_knowledge_random_target
       (
+         params,
          k,
-         &word_id,
          (*sequence)[0],
          sequence_id,
+         /* is_swt = */ false,
+         &word_id,
          io
       ) < 0
    )
@@ -128,10 +133,10 @@ static int extend_left
  */
 static int complete_left_part_of_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    JH_index * sequence [restrict static 1],
    size_t sequence_capacity [const restrict static 1],
    size_t sequence_length [const restrict static 1],
-   const JH_index markov_order,
    size_t credits [const restrict],
    struct JH_knowledge k [const restrict static 1],
    FILE io [const restrict static 1]
@@ -145,10 +150,10 @@ static int complete_left_part_of_sequence
          (
             extend_left
             (
+               params,
                sequence,
                sequence_capacity,
                sequence_length,
-               markov_order,
                k,
                io
             ) < 0
@@ -228,6 +233,7 @@ static int complete_left_part_of_sequence
  */
 static int extend_right
 (
+   const struct JH_parameters params [const restrict static 1],
    JH_index * sequence [const restrict static 1],
    size_t sequence_capacity [const restrict static 1],
    size_t sequence_length [const restrict static 1],
@@ -236,7 +242,7 @@ static int extend_right
    FILE io [const restrict static 1]
 )
 {
-   JH_index sequence_id, word_id;
+   JH_index sequence_id, expected_sequence_sorted_ix, word_id;
 
    /* preceding_words_weights_sum > 0 */
 
@@ -246,10 +252,12 @@ static int extend_right
    (
       JH_knowledge_find_sequence
       (
+         params,
          k,
          ((*sequence) + (*sequence_length - markov_order)),
-         markov_order,
-         &sequence_id
+         &sequence_id,
+         &expected_sequence_sorted_ix,
+         io
       ) < 0
    )
    {
@@ -269,11 +277,13 @@ static int extend_right
 
    if
    (
-      JH_knowledge_random_swt_target
+      JH_knowledge_random_target
       (
+         params,
          k,
          sequence_id,
          (*sequence)[*sequence_length - 1],
+         /* is_swt = */ true,
          &word_id,
          io
       ) < 0
@@ -333,6 +343,7 @@ static int extend_right
  */
 static int complete_right_part_of_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    JH_index * sequence [const restrict static 1],
    size_t sequence_capacity [const restrict static 1],
    size_t sequence_length [const restrict static 1],
@@ -350,6 +361,7 @@ static int complete_right_part_of_sequence
          (
             extend_right
             (
+               params,
                sequence,
                sequence_capacity,
                sequence_length,
@@ -430,6 +442,7 @@ static int complete_right_part_of_sequence
  */
 static int initialize_sequence
 (
+   const struct JH_parameters params [const restrict static 1],
    JH_index sequence [const restrict static 1],
    const JH_index initial_word,
    const JH_index markov_order,
@@ -441,14 +454,15 @@ static int initialize_sequence
 
    if
    (
-      JH_knowledge_copy_random_swt_sequence
+      JH_knowledge_copy_random_prefix
       (
+         params,
          k,
-         sequence,
          initial_word,
-         markov_order,
+         sequence,
          io
-      ) < 0
+      )
+      < 0
    )
    {
       return -1;
@@ -481,6 +495,7 @@ static int initialize_sequence
 /* See "sequence.h" */
 int JH_sequence_create_from
 (
+   const struct JH_parameters params [const restrict static 1],
    const JH_index initial_word,
    size_t credits [const restrict],
    struct JH_knowledge k [const restrict static 1],
@@ -511,6 +526,7 @@ int JH_sequence_create_from
    (
       initialize_sequence
       (
+         params,
          *sequence,
          initial_word,
          markov_order,
@@ -532,6 +548,7 @@ int JH_sequence_create_from
    (
       complete_right_part_of_sequence
       (
+         params,
          sequence,
          sequence_capacity,
          sequence_length,
@@ -553,10 +570,10 @@ int JH_sequence_create_from
    (
       complete_left_part_of_sequence
       (
+         params,
          sequence,
          sequence_capacity,
          sequence_length,
-         markov_order,
          credits,
          k,
          io

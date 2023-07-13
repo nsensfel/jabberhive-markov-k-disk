@@ -11,6 +11,8 @@
 
 #include "../knowledge/knowledge_types.h"
 
+#include "../parameters/parameters_types.h"
+
 #include "sequence_types.h"
 
 /*@
@@ -91,6 +93,7 @@ int JH_sequence_ensure_capacity
 
 int JH_sequence_from_undercase_string
 (
+   const struct JH_parameters params [const restrict static 1],
    const JH_char string [const restrict],
    const size_t string_length,
    struct JH_knowledge k [const restrict static 1],
@@ -123,6 +126,7 @@ int JH_sequence_from_undercase_string
  */
 int JH_sequence_create_from
 (
+   const struct JH_parameters params [const restrict static 1],
    const JH_index initial_word,
    size_t credits [const restrict],
    struct JH_knowledge k [const restrict static 1],
@@ -312,13 +316,14 @@ int JH_sequence_append_right
  */
 int JH_sequence_cmp
 (
-   const JH_index sequence_a [const],
-   const JH_index sequence_b [const],
+   const JH_index sequence_a [const restrict static 1],
+   const JH_index sequence_b [const restrict static 1],
    const JH_index length
 );
 
 int JH_sequence_to_undercase_string
 (
+   const struct JH_parameters params [const restrict static 1],
    const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
    struct JH_knowledge k [const restrict static 1],

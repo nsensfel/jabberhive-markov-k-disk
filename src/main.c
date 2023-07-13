@@ -10,16 +10,17 @@ static void print_help (const char runnable [const restrict static 1])
 {
    printf
    (
-      "JabberHive - K-order Markov Chain Server\n"
+      "JabberHive - K-order Markov Chain Server (Disk)\n"
       "Software Version %d\n"
       "Protocol Version %d\n"
       "\nUsages:\n"
-      "   SERVER:\t%s SESSION_NAME MARKOV_ORDER\n"
+      "   SERVER:\t%s SESSION_NAME MARKOV_ORDER DATABASE_DIRECTORY\n"
       "   CLEAN UP:\t%s -c SESSION_NAME\n"
       "   SHOW HELP:\tAnything else.\n"
       "\nParameters:\n"
       "   SESSION_NAME:\tValid UNIX socket.\n"
-      "   MARKOV_ORDER:\tPositive integer, greater than 1.\n",
+      "   MARKOV_ORDER:\tPositive integer, greater than 1.\n"
+      "   DATABASE_DIRECTORY:\tExisting directory to store data in.\n",
       JH_SERVER_VERSION,
       JH_PROTOCOL_VERSION,
       runnable,
