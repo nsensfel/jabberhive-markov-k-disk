@@ -23,6 +23,8 @@ static int initialize_word
    w->word = (JH_char *) NULL;
    w->word_length = 0;
    w->occurrences = 0;
+   w->swt_sequences_ref_length = 0;
+   w->tws_sequences_ref_length = 0;
 
    return 0;
 }
@@ -218,6 +220,13 @@ static int add_word
 
    if (stored_word == (JH_char *) NULL)
    {
+      JH_S_DEBUG
+      (
+         io,
+         JH_DEBUG_KNOWLEDGE_LEARN_WORD,
+         "New word failed to be copied."
+      );
+
       return -1;
    }
 
@@ -245,6 +254,14 @@ static int add_word
       return -1;
    }
 
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_KNOWLEDGE_LEARN_WORD,
+      "New word (%u) directory created.",
+      word_id
+   );
+
    if (JH_io_write_word_from_id(params, word_id, &new_word, io) < 0)
    {
       JH_knowledge_finalize_word(&new_word);
@@ -252,6 +269,14 @@ static int add_word
 
       return -1;
    }
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_KNOWLEDGE_LEARN_WORD,
+      "New word (%u) file written.",
+      word_id
+   );
 
    JH_knowledge_finalize_word(&new_word);
 

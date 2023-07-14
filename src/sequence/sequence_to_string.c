@@ -122,7 +122,6 @@ static int add_word
 
    insertion_point = *destination_length;
 
-   /* word_size includes '\n', which will be replaced by a space. */
    /* (word_size == JH_INDEX_MAX) ==> could not have learned word. */
    if (increment_required_capacity(destination_length, (word_size + 1), io) < 0)
    {
@@ -201,6 +200,8 @@ int JH_sequence_to_undercase_string
          return -1;
       }
    }
+
+   (*destination)[*destination_length - 1] = '\0';
 
    return 0;
 }

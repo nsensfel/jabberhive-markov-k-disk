@@ -10,11 +10,13 @@
    #define JH_RUNNING_FRAMA_C 1
 #endif
 
-#define JH_DEBUG_ALL 0
+#define JH_DEBUG_ALL 1
 
 #ifndef JH_DEBUG_ALL
    #define JH_DEBUG_ALL 0
 #endif
+
+#define JH_DEBUG_IO (0 | JH_DEBUG_ALL)
 
 #define JH_DEBUG_KNOWLEDGE (0 | JH_DEBUG_ALL)
 #define JH_DEBUG_KNOWLEDGE_LEARN_SEQUENCE \

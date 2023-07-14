@@ -12,16 +12,16 @@
 
 #include "io.h"
 
-int JH_io_generate_adjacent_sequence_directory_from_id
+int JH_io_generate_adjacent_sequence_directory_path
 (
    const struct JH_parameters params [const restrict static 1],
    const JH_index word_id,
    const JH_index adjacent_sequence_ix,
    const bool is_swt,
+   char * result [const restrict static 1],
    FILE io [const restrict static 1]
 )
 {
-   char * path;
    size_t length;
 
    length =
@@ -29,15 +29,17 @@ int JH_io_generate_adjacent_sequence_directory_from_id
       (
          NULL,
          0,
-         (is_swt ? "%s/word/%u/swt_%u" : "%s/word/%u/tws_%u"),
+         (is_swt ? "%s/word/%u/swt/%u" : "%s/word/%u/tws/%u"),
          JH_parameters_get_database_path(params),
          word_id,
          adjacent_sequence_ix
       );
 
-   path = (char *) calloc(length, sizeof(char));
+   length += 1;
 
-   if (path == (char *) NULL)
+   *result = calloc(length, sizeof(char));
+
+   if (*result == (char *) NULL)
    {
       JH_ERROR
       (
@@ -51,13 +53,44 @@ int JH_io_generate_adjacent_sequence_directory_from_id
 
    snprintf
    (
-      path,
+      *result,
       length,
-      (is_swt ? "%s/word/%u/swt_%u" : "%s/word/%u/tws_%u"),
+      (is_swt ? "%s/word/%u/swt/%u" : "%s/word/%u/tws/%u"),
       JH_parameters_get_database_path(params),
       word_id,
       adjacent_sequence_ix
    );
+
+   return 0;
+}
+
+int JH_io_generate_adjacent_sequence_directory_from_id
+(
+   const struct JH_parameters params [const restrict static 1],
+   const JH_index word_id,
+   const JH_index adjacent_sequence_ix,
+   const bool is_swt,
+   FILE io [const restrict static 1]
+)
+{
+   char * path;
+
+   if
+   (
+      JH_io_generate_adjacent_sequence_directory_path
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         &path,
+         io
+      )
+      < 0
+   )
+   {
+      return -1;
+   }
 
    if (mkdir(path, 0755) < 0)
    {
@@ -96,11 +129,13 @@ int JH_io_generate_adjacent_sequence_filename
       (
          NULL,
          0,
-         (is_swt ? "%s/%u/swt/%u.txt" : "%s/%u/tws/%u.txt"),
+         (is_swt ? "%s/word/%u/swt/%u/data.txt" : "%s/word/%u/tws/%u/data.txt"),
          JH_parameters_get_database_path(params),
          word_id,
          adjacent_sequence_ix
       );
+
+   length += 1;
 
    *result = calloc(length, sizeof(char));
 
@@ -120,7 +155,7 @@ int JH_io_generate_adjacent_sequence_filename
    (
       *result,
       length,
-      (is_swt ? "%s/%u/swt/%u.txt" : "%s/%u/tws/%u.txt"),
+      (is_swt ? "%s/word/%u/swt/%u/data.txt" : "%s/word/%u/tws/%u/data.txt"),
       JH_parameters_get_database_path(params),
       word_id,
       adjacent_sequence_ix
@@ -178,6 +213,14 @@ int JH_io_write_adjacent_sequence
 )
 {
    FILE *file;
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Writing adjacent sequence to %s.",
+      filename
+   );
 
    file = fopen(filename, "w");
 
@@ -259,6 +302,14 @@ int JH_io_read_adjacent_sequence
    size_t buffer_size;
    char * buffer;
    FILE * file;
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Reading adjacent sequence from %s.",
+      filename
+   );
 
    file = fopen(filename, "r");
 
@@ -358,7 +409,7 @@ int JH_io_shift_adjacent_sequence_from_id
    {
       if
       (
-         JH_io_generate_adjacent_sequence_filename
+         JH_io_generate_adjacent_sequence_directory_path
          (
             params,
             word_id,
@@ -377,7 +428,7 @@ int JH_io_shift_adjacent_sequence_from_id
 
       if
       (
-         JH_io_generate_adjacent_sequence_filename
+         JH_io_generate_adjacent_sequence_directory_path
          (
             params,
             word_id,
@@ -400,7 +451,7 @@ int JH_io_shift_adjacent_sequence_from_id
          JH_ERROR
          (
             io,
-            "Unable to move file \"%s\" to \"%s\": %s.\n"
+            "Unable to rename directory \"%s\" to \"%s\": %s.\n"
             "Database may have been made incoherent as a result."
             ,
             source,

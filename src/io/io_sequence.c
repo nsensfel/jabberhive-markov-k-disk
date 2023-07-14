@@ -29,6 +29,8 @@ int JH_io_generate_sequence_filename
          id
       );
 
+   length += 1;
+
    *result = calloc(length, sizeof(char));
 
    if (*result == (char *) NULL)
@@ -114,6 +116,14 @@ int JH_io_write_sequence
    JH_index i;
    FILE *file;
 
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Writing sequence to %s.",
+      filename
+   );
+
    file = fopen(filename, "w");
 
    if (file == (FILE *) NULL)
@@ -198,6 +208,15 @@ int JH_io_read_sequence
    size_t buffer_size;
    char * buffer;
    FILE * file;
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Reading sequence from %s.",
+      filename
+   );
+
 
    file = fopen(filename, "r");
 

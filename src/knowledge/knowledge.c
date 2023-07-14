@@ -20,6 +20,11 @@ static int initialize_without_database
 {
    JH_index reserved_word_id;
 
+   if (JH_io_initialize_database(params, io) < 0)
+   {
+      return -1;
+   }
+
    if
    (
       (
@@ -49,7 +54,7 @@ static int initialize_without_database
    {
       JH_S_FATAL(io, "Unable to learn reserved words.");
 
-      return -1;
+      return -2;
    }
 
    return 0;
@@ -302,7 +307,8 @@ int JH_knowledge_get_word
 
    JH_knowledge_readunlock_word(k, word_id, io);
 
-   *word = calloc(target.word_length, sizeof(char));
+   // +1 to account for '\0'
+   *word = calloc((target.word_length + 1), sizeof(char));
 
    if (*word == (char *) NULL)
    {
@@ -314,7 +320,7 @@ int JH_knowledge_get_word
       return -1;
    }
 
-   memcpy(*word, target.word, sizeof(char) * target.word_length);
+   memcpy(*word, target.word, sizeof(char) * (target.word_length + 1));
 
    *word_length = target.word_length;
 

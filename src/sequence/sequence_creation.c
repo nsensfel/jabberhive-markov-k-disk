@@ -44,14 +44,14 @@ static int extend_left
    FILE io [const restrict static 1]
 )
 {
+   int ret;
    JH_index sequence_id, expected_sequence_ix, word_id;
 
    /* preceding_words_weights_sum > 0 */
 
    JH_knowledge_readlock_sequences(k, io);
 
-   if
-   (
+   ret =
       JH_knowledge_find_sequence
       (
          params,
@@ -60,14 +60,22 @@ static int extend_left
          &sequence_id,
          &expected_sequence_ix,
          io
-      ) < 0
-   )
+      );
+
+   if (ret < 0)
+   {
+      JH_knowledge_readunlock_sequences(k, io);
+
+      return -1;
+   }
+
+   if (ret == 0)
    {
       JH_knowledge_readunlock_sequences(k, io);
 
       JH_S_ERROR(io, "Could not find matching TWS sequence.");
 
-      return -1;
+      return -2;
    }
 
    JH_knowledge_readunlock_sequences(k, io);
@@ -281,8 +289,8 @@ static int extend_right
       (
          params,
          k,
-         sequence_id,
          (*sequence)[*sequence_length - 1],
+         sequence_id,
          /* is_swt = */ true,
          &word_id,
          io

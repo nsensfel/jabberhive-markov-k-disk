@@ -147,13 +147,15 @@ int JH_server_worker_send_generated_reply
 )
 {
    int err;
-   size_t written;
+//   size_t written;
 
-   err = fputs
-   (
-      "!GR ",
-      worker->socket_as_file
-   );
+   err =
+      fprintf
+      (
+         worker->socket_as_file,
+         "!GR %s\n",
+         worker->buffer
+      );
 
    if (err == 0)
    {
@@ -176,6 +178,11 @@ int JH_server_worker_send_generated_reply
 
       return -1;
    }
+
+   /*
+   printf("About to print RR Buffer.\n");
+   worker->buffer[worker->buffer_length - 1] = '\0';
+   printf("RR Buffer: %s\n", worker->buffer);
 
    written =
       fwrite
@@ -213,6 +220,6 @@ int JH_server_worker_send_generated_reply
 
       return -1;
    }
-
+   */
    return 0;
 }

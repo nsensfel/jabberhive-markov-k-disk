@@ -28,15 +28,17 @@ int JH_io_generate_sequence_target_filename
          NULL,
          0,
          (is_swt ?
-            "%s/word/%u/swt_%u/target_%u.txt"
+            "%s/word/%u/swt/%u/target_%u.txt"
             :
-            "%s/word/%u/tws_%u/target_%u.txt"
+            "%s/word/%u/tws/%u/target_%u.txt"
          ),
          JH_parameters_get_database_path(params),
          word_id,
          adjacent_sequence_ix,
          sequence_target_ix
       );
+
+   length += 1;
 
    *result = calloc(length, sizeof(char));
 
@@ -57,9 +59,9 @@ int JH_io_generate_sequence_target_filename
       *result,
       length,
       (is_swt ?
-         "%s/word/%u/swt_%u/target_%u.txt"
+         "%s/word/%u/swt/%u/target_%u.txt"
          :
-         "%s/word/%u/tws_%u/target_%u.txt"
+         "%s/word/%u/tws/%u/target_%u.txt"
       ),
       JH_parameters_get_database_path(params),
       word_id,
@@ -121,6 +123,14 @@ int JH_io_write_sequence_target
 )
 {
    FILE *file;
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Writing sequence target to %s.",
+      filename
+   );
 
    file = fopen(filename, "w");
 
@@ -203,6 +213,14 @@ int JH_io_read_sequence_target
    size_t buffer_size;
    char * buffer;
    FILE * file;
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Reading sequence target from %s.",
+      filename
+   );
 
    file = fopen(filename, "r");
 

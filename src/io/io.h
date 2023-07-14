@@ -28,6 +28,16 @@ int JH_io_generate_adjacent_sequence_filename
    FILE io [const restrict static 1]
 );
 
+int JH_io_generate_adjacent_sequence_directory_path
+(
+   const struct JH_parameters params [const restrict static 1],
+   const JH_index word_id,
+   const JH_index adjacent_sequence_ix,
+   const bool is_swt,
+   char * result [const restrict static 1],
+   FILE io [const restrict static 1]
+);
+
 int JH_io_write_adjacent_sequence_from_id
 (
    const struct JH_parameters params [const restrict static 1],
@@ -78,6 +88,12 @@ int JH_io_shift_adjacent_sequence_from_id
 int JH_io_database_exists
 (
    const struct JH_knowledge k [const restrict static 1]
+);
+
+int JH_io_initialize_database
+(
+   const struct JH_parameters params [const restrict static 1],
+   FILE io [const restrict static 1]
 );
 
 /******************************************************************************/

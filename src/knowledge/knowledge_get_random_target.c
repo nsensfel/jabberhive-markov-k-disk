@@ -113,12 +113,12 @@ int JH_knowledge_random_target
    FILE io [const restrict static 1]
 )
 {
+   int ret;
    JH_index adjacent_sequence_index;
 
    JH_knowledge_readlock_word(k, word_id, io);
 
-   if
-   (
+   ret =
       JH_knowledge_find_adjacent_sequence
       (
          params,
@@ -127,11 +127,25 @@ int JH_knowledge_random_target
          is_swt,
          &adjacent_sequence_index,
          io
-      )
-      < 0
-   )
+      );
+
+   if (ret < 0)
    {
       JH_knowledge_readunlock_word(k, word_id, io);
+
+      return -1;
+   }
+   else if (ret == 0)
+   {
+      JH_PROG_ERROR
+      (
+         io,
+         "Could not pick random target because adjacent sequence was not found {word_id: %u, is_swt: %d, adjacent_sequence_ix: %u, sequence_id: %u}.",
+         word_id,
+         is_swt,
+         adjacent_sequence_index,
+         sequence_id
+      );
 
       return -1;
    }

@@ -172,9 +172,9 @@ static int add_tws_sequence
          (
             params,
             k,
-            JH_START_OF_SEQUENCE_ID,
-            sequence[index],
             sequence_id,
+            sequence[index],
+            JH_START_OF_SEQUENCE_ID,
             /* is_swt = */ false,
             io
          );
@@ -186,9 +186,9 @@ static int add_tws_sequence
          (
             params,
             k,
-            sequence[index - 1],
-            sequence[index],
             sequence_id,
+            sequence[index],
+            sequence[index - 1],
             /* is_swt = */ false,
             io
          );
@@ -249,6 +249,8 @@ int JH_knowledge_learn_sequence
          ) < 0
       )
       {
+         free((void *) buffer);
+
          return -1;
       }
 
@@ -268,6 +270,8 @@ int JH_knowledge_learn_sequence
          ) < 0
       )
       {
+         free((void *) buffer);
+
          return -1;
       }
 
@@ -286,12 +290,14 @@ int JH_knowledge_learn_sequence
       )
       {
          JH_knowledge_writeunlock_word(k, sequence[i], io);
+         free((void *) buffer);
 
          return -1;
       }
 
       if (JH_io_read_word(word_filename, &word, io) < 0)
       {
+         free((void *) buffer);
          free((void *) word_filename);
          JH_knowledge_writeunlock_word(k, sequence[i], io);
 
@@ -303,6 +309,7 @@ int JH_knowledge_learn_sequence
       if (JH_io_write_word(word_filename, &word, io) < 0)
       {
          JH_knowledge_finalize_word(&word);
+         free((void *) buffer);
          free((void *) word_filename);
          JH_knowledge_writeunlock_word(k, sequence[i], io);
 
@@ -313,6 +320,8 @@ int JH_knowledge_learn_sequence
       free((void *) word_filename);
       JH_knowledge_writeunlock_word(k, sequence[i], io);
    }
+
+   free((void *) buffer);
 
    return 0;
 }

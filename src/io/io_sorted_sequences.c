@@ -26,6 +26,8 @@ int JH_io_generate_sorted_sequences_filename
          JH_parameters_get_database_path(params)
       );
 
+   length += 1;
+
    *result = calloc(length, sizeof(char));
 
    if (*result == (char *) NULL)
@@ -61,6 +63,14 @@ int JH_io_write_sorted_sequences
 {
    JH_index i;
    FILE *file;
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Writing sorted sequences list to %s.",
+      filename
+   );
 
    file = fopen(filename, "w");
 
@@ -101,6 +111,14 @@ int JH_io_read_sorted_sequences
    size_t buffer_size;
    char * buffer;
    FILE * file;
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Reading sorted sequences list from %s.",
+      filename
+   );
 
    file = fopen(filename, "r");
 

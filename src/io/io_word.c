@@ -11,10 +11,11 @@
 
 #include "io.h"
 
-int JH_io_generate_word_directory_from_id
+static int generate_word_directory_from_id
 (
    const struct JH_parameters params [const restrict static 1],
    const JH_index id,
+   const char suffix [const restrict static 1],
    FILE io [const restrict static 1]
 )
 {
@@ -26,10 +27,13 @@ int JH_io_generate_word_directory_from_id
       (
          NULL,
          0,
-         "%s/word/%u",
+         "%s/word/%u%s",
          JH_parameters_get_database_path(params),
-         id
+         id,
+         suffix
       );
+
+   length += 1;
 
    path = (char *) calloc(length, sizeof(char));
 
@@ -49,9 +53,18 @@ int JH_io_generate_word_directory_from_id
    (
       path,
       length,
-      "%s/word/%u",
+      "%s/word/%u%s",
       JH_parameters_get_database_path(params),
-      id
+      id,
+      suffix
+   );
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Creating dir: %s",
+      path
    );
 
    if (mkdir(path, 0755) < 0)
@@ -70,6 +83,26 @@ int JH_io_generate_word_directory_from_id
    }
 
    free((void *) path);
+
+   return 0;
+}
+
+int JH_io_generate_word_directory_from_id
+(
+   const struct JH_parameters params [const restrict static 1],
+   const JH_index id,
+   FILE io [const restrict static 1]
+)
+{
+   if
+   (
+      (generate_word_directory_from_id(params, id, "", io) < 0)
+      || (generate_word_directory_from_id(params, id, "/swt", io) < 0)
+      || (generate_word_directory_from_id(params, id, "/tws", io) < 0)
+   )
+   {
+      return -1;
+   }
 
    return 0;
 }
@@ -93,6 +126,8 @@ int JH_io_generate_word_filename
          JH_parameters_get_database_path(params),
          id
       );
+
+   length += 1;
 
    *result = calloc(length, sizeof(char));
 
@@ -165,6 +200,14 @@ int JH_io_write_word
 )
 {
    FILE *file;
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Writing word to %s.",
+      filename
+   );
 
    file = fopen(filename, "w");
 
@@ -245,6 +288,14 @@ int JH_io_read_word
    size_t buffer_size;
    char * buffer;
    FILE * file;
+
+   JH_DEBUG
+   (
+      io,
+      JH_DEBUG_IO,
+      "Reading word from %s.",
+      filename
+   );
 
    file = fopen(filename, "r");
 
@@ -354,6 +405,8 @@ int JH_io_read_word
 
       return -3;
    }
+
+   out->word[out->word_length] = '\0'; // replaces '\n'
 
    fclose(file);
 

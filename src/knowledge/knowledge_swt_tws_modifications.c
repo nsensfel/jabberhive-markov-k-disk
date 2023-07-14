@@ -81,7 +81,7 @@ static int add_target
             adjacent_sequence_ix,
             is_swt,
             t_index,
-            length,
+            (length - 1),
             io
          )
          < 0
@@ -89,24 +89,6 @@ static int add_target
       {
          return -1;
       }
-   }
-
-   if
-   (
-      JH_io_read_sequence_target_from_id
-      (
-         params,
-         word_id,
-         adjacent_sequence_ix,
-         is_swt,
-         t_index,
-         &target,
-         io
-      )
-      < 0
-   )
-   {
-      return -1;
    }
 
    target.id = target_id;
@@ -180,7 +162,7 @@ static int add_adjacent_sequence
          word_id,
          adjacent_sequence_ix,
          is_swt,
-         new_length,
+         (new_length - 1),
          io
       )
       < 0
@@ -192,6 +174,22 @@ static int add_adjacent_sequence
    as.id = sequence_id;
    as.occurrences = 0;
    as.targets_length = 0;
+
+   if
+   (
+      JH_io_generate_adjacent_sequence_directory_from_id
+      (
+         params,
+         word_id,
+         adjacent_sequence_ix,
+         is_swt,
+         io
+      )
+      < 0
+   )
+   {
+      return -4;
+   }
 
    if
    (
@@ -207,7 +205,7 @@ static int add_adjacent_sequence
       < 0
    )
    {
-      return -4;
+      return -5;
    }
 
    return 0;
