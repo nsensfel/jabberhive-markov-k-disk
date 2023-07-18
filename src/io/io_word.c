@@ -224,6 +224,20 @@ int JH_io_write_word
       return -1;
    }
 
+   if (in->word_length == 0)
+   {
+      JH_PROG_ERROR
+      (
+         io,
+         "Would be writing empty word in file \"%s\".",
+         filename
+      );
+
+      return -1;
+   }
+
+   in->word[in->word_length] = '\0';
+
    fprintf
    (
       file,

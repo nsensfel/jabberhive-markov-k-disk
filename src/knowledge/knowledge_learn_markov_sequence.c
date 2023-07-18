@@ -264,7 +264,7 @@ int JH_knowledge_learn_markov_sequence
     * we did, so we need to find the sequence's location again.
     */
    i =
-      JH_knowledge_find_sequence
+      JH_knowledge_lazy_find_sequence
       (
          params,
          k,

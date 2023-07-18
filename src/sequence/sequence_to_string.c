@@ -201,7 +201,16 @@ int JH_sequence_to_undercase_string
       }
    }
 
-   (*destination)[*destination_length - 1] = '\0';
+   if (destination_length == 0)
+   {
+      JH_S_ERROR(io, "Generated empty string.");
+
+      return -2;
+   }
+   else
+   {
+      (*destination)[*destination_length - 1] = '\0';
+   }
 
    return 0;
 }

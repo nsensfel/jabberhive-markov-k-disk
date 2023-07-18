@@ -199,9 +199,48 @@ int JH_knowledge_find_word
 );
 
 /*
+ * *expected_word_sorted_ix should be set to a valid value, the closer it is to
+ * the correct value, the faster this function is.
+ *
+ * When returning 0:
+ *    {word} is in {k}.
+ *    {word} is located at {k->words[*result]}.
+ *
+ * When returning -1:
+ *    {word} is not in {k}.
+ *    {*result} is where {word} was expected to be found in
+ *    {k->sorted_indices}.
+ *
+ * Does not acquire locks
+ */
+int JH_knowledge_lazy_find_word
+(
+   const struct JH_parameters params [const restrict static 1],
+   const struct JH_knowledge k [const restrict static 1],
+   const JH_char word [const restrict static 1],
+   const size_t word_size,
+   JH_index found_word_id [const restrict static 1],
+   JH_index expected_word_sorted_ix [const restrict static 1],
+   FILE io [const restrict static 1]
+);
+
+/*
  * Does not acquire locks
  */
 int JH_knowledge_find_sequence
+(
+   const struct JH_parameters params [const restrict static 1],
+   const struct JH_knowledge k [const restrict static 1],
+   const JH_index sequence [const restrict static 1],
+   JH_index found_sequence_id [const restrict static 1],
+   JH_index expected_sequence_sorted_ix [const restrict static 1],
+   FILE io [const restrict static 1]
+);
+
+/*
+ * Does not acquire locks
+ */
+int JH_knowledge_lazy_find_sequence
 (
    const struct JH_parameters params [const restrict static 1],
    const struct JH_knowledge k [const restrict static 1],

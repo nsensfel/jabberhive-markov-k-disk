@@ -322,6 +322,8 @@ int JH_knowledge_get_word
 
    memcpy(*word, target.word, sizeof(char) * (target.word_length + 1));
 
+   (*word)[target.word_length] = '\0';
+
    *word_length = target.word_length;
 
    JH_knowledge_finalize_word(&target);

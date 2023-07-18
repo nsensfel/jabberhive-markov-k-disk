@@ -343,6 +343,12 @@ int JH_knowledge_learn_word
 
       return -1;
    }
+   else if (word_length == 0)
+   {
+      JH_S_ERROR(io, "Word is empty.");
+
+      return -2;
+   }
 
    JH_knowledge_readlock_words(k, io);
 
@@ -390,7 +396,7 @@ int JH_knowledge_learn_word
     * we did, so we need to find the word's location again.
     */
    i =
-      JH_knowledge_find_word
+      JH_knowledge_lazy_find_word
       (
          params,
          k,
