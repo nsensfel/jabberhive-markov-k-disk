@@ -233,6 +233,8 @@ int JH_io_write_word
          filename
       );
 
+      fclose(file);
+
       return -1;
    }
 

@@ -2,7 +2,7 @@
 PTHREADS_LIB_FLAGS ?= -pthread
 ################################################################################
 CFLAGS += -O3
-CFLAGS += -Wall -Wextra -pedantic -Werror
+CFLAGS += -Wall -Wextra -pedantic -Werror -g
 CFLAGS += -D_POSIX_SOURCE
 CFLAGS += -D_POSIX_C_SOURCE=200809L
 CFLAGS += $(PTHREADS_LIB_FLAGS)

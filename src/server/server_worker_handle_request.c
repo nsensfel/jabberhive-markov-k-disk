@@ -166,8 +166,8 @@ static int handle_rl
       (
          worker->params.server_params,
          worker->params.knowledge,
-         worker->sequence_buffer,
          worker->sequence_buffer_length,
+         worker->sequence_buffer,
          worker->socket_as_file
       ) < 0
    )
@@ -207,8 +207,8 @@ static int handle_rlr
       (
          worker->params.server_params,
          worker->params.knowledge,
-         worker->sequence_buffer,
          worker->sequence_buffer_length,
+         worker->sequence_buffer,
          worker->socket_as_file
       ) < 0
    )

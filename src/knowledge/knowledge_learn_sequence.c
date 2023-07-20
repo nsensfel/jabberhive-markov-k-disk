@@ -138,9 +138,9 @@ static int add_tws_sequence
 (
    const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
-   const JH_index sequence [const restrict static 1],
-   const size_t index,
    const size_t sequence_length,
+   const JH_index sequence [const restrict static sequence_length],
+   const size_t index,
    JH_index buffer [const restrict static 1],
    const JH_index buffer_length,
    FILE io [const restrict static 1]
@@ -202,8 +202,8 @@ int JH_knowledge_learn_sequence
 (
    const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
-   const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
+   const JH_index sequence [const restrict static sequence_length],
    FILE io [const restrict static 1]
 )
 {
@@ -261,9 +261,9 @@ int JH_knowledge_learn_sequence
          (
             params,
             k,
+            sequence_length,
             sequence,
             i,
-            sequence_length,
             buffer,
             buffer_length,
             io

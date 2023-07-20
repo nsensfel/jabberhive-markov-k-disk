@@ -245,6 +245,8 @@ int JH_io_read_sequence
          strerror(errno)
       );
 
+      fclose(file);
+
       return -2;
    }
 

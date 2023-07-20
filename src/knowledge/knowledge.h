@@ -151,8 +151,8 @@ int JH_knowledge_learn_sequence
 (
    const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
-   const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
+   const JH_index sequence [const restrict static sequence_length],
    FILE io [const restrict static 1]
 );
 
