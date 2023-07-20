@@ -146,6 +146,7 @@ int JH_knowledge_random_target
          adjacent_sequence_index,
          sequence_id
       );
+      JH_knowledge_readunlock_word(k, word_id, io);
 
       return -1;
    }
