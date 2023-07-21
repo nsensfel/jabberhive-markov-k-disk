@@ -74,9 +74,9 @@ int JH_knowledge_lazy_find_sequence
       cmp =
          JH_sequence_cmp
          (
+            markov_sequence_length,
             sequence,
-            candidate_sequence,
-            markov_sequence_length
+            candidate_sequence
          );
 
       JH_knowledge_finalize_sequence(&candidate_sequence);
@@ -144,8 +144,8 @@ int JH_knowledge_lazy_find_word
 (
    const struct JH_parameters params [const restrict static 1],
    const struct JH_knowledge k [const restrict static 1],
-   const JH_char word [const restrict static 1],
    const size_t word_size,
+   const JH_char word [const restrict static word_size],
    JH_index found_word_id [const restrict static 1],
    JH_index expected_word_sorted_ix [const restrict static 1],
    FILE io [const restrict static 1]
@@ -194,10 +194,10 @@ int JH_knowledge_lazy_find_word
       cmp =
          JH_word_cmp
          (
-            word,
             word_size,
-            candidate.word,
-            candidate.word_length
+            word,
+            candidate.word_length,
+            candidate.word
          );
 
       JH_knowledge_finalize_word(&candidate);

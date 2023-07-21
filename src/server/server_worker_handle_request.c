@@ -23,8 +23,8 @@ static int load_reply
       (
          worker->params.server_params,
          worker->params.knowledge,
-         worker->sequence_buffer,
          worker->sequence_buffer_length,
+         worker->sequence_buffer,
          &rarest_word_id,
          worker->socket_as_file
       ) < 0
@@ -74,8 +74,8 @@ static int load_reply
       JH_sequence_to_undercase_string
       (
          worker->params.server_params,
-         worker->sequence_buffer,
          worker->sequence_buffer_length,
+         worker->sequence_buffer,
          worker->params.knowledge,
          &(worker->buffer),
          &(worker->buffer_capacity),
@@ -147,8 +147,8 @@ static int handle_rl
       JH_sequence_from_undercase_string
       (
          worker->params.server_params,
-         (const JH_char *) (worker->buffer + 4),
          (worker->buffer_length - 5),
+         (const JH_char *) (worker->buffer + 4),
          worker->params.knowledge,
          &(worker->sequence_buffer),
          &(worker->sequence_buffer_capacity),
@@ -188,8 +188,8 @@ static int handle_rlr
       JH_sequence_from_undercase_string
       (
          worker->params.server_params,
-         (const JH_char *) (worker->buffer + 5),
          (worker->buffer_length - 6),
+         (const JH_char *) (worker->buffer + 5),
          worker->params.knowledge,
          &(worker->sequence_buffer),
          &(worker->sequence_buffer_capacity),
@@ -239,8 +239,8 @@ static int handle_rr
       JH_sequence_from_undercase_string
       (
          worker->params.server_params,
-         (const JH_char *) (worker->buffer + 4),
          (worker->buffer_length - 5),
+         (const JH_char *) (worker->buffer + 4),
          worker->params.knowledge,
          &(worker->sequence_buffer),
          &(worker->sequence_buffer_capacity),

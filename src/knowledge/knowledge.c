@@ -32,8 +32,8 @@ static int initialize_without_database
          (
             params,
             k,
-            "[SoS]",
             /* word_length = */ 5,
+            "[SoS]",
             &reserved_word_id,
             io
          ) < 0
@@ -44,8 +44,8 @@ static int initialize_without_database
          (
             params,
             k,
-            "[EoS]",
             /* word_length = */ 5,
+            "[EoS]",
             &reserved_word_id,
             io
          ) < 0
@@ -335,8 +335,8 @@ int JH_knowledge_rarest_word
 (
    const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
-   const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
+   const JH_index sequence [const restrict static sequence_length],
    JH_index rarest_word_id [const restrict static 1],
    FILE io [const restrict static 1]
 )

@@ -34,8 +34,8 @@ static int initialize_word
 /******************************************************************************/
 static JH_char * copy_word
 (
-   const JH_char original [const restrict static 1],
    const JH_index original_length,
+   const JH_char original [const restrict static original_length],
    FILE io [const restrict static 1]
 )
 {
@@ -195,8 +195,8 @@ static int add_word
 (
    const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
-   const JH_char word [const restrict static 1],
    const JH_index word_length,
+   const JH_char word [const restrict static word_length],
    const JH_index word_id,
    const JH_index sorted_word_id,
    FILE io [const restrict static 1]
@@ -218,7 +218,7 @@ static int add_word
       return -1;
    }
 
-   stored_word = copy_word(word, word_length, io);
+   stored_word = copy_word(word_length, word, io);
 
    if (stored_word == (JH_char *) NULL)
    {
@@ -330,8 +330,8 @@ int JH_knowledge_learn_word
 (
    const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
-   const JH_char word [const restrict static 1],
    const size_t word_length,
+   const JH_char word [const restrict static word_length],
    JH_index word_id [const restrict static 1],
    FILE io [const restrict static 1]
 )
@@ -359,8 +359,8 @@ int JH_knowledge_learn_word
       (
          params,
          k,
-         word,
          (((size_t) word_length) * sizeof(JH_char)),
+         word,
          word_id,
          &sorted_ix,
          io
@@ -402,8 +402,8 @@ int JH_knowledge_learn_word
       (
          params,
          k,
-         word,
          (((size_t) word_length) * sizeof(JH_char)),
+         word,
          word_id,
          &sorted_ix,
          io
@@ -450,8 +450,8 @@ int JH_knowledge_learn_word
       (
          params,
          k,
-         word,
          (JH_index) word_length,
+         word,
          *word_id,
          sorted_ix,
          io

@@ -141,8 +141,8 @@ int JH_knowledge_learn_word
 (
    const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
-   const JH_char word [const restrict static 1],
    const size_t word_length,
+   const JH_char word [const restrict static word_length],
    JH_index result [const restrict static 1],
    FILE io [const restrict static 1]
 );
@@ -191,8 +191,8 @@ int JH_knowledge_find_word
 (
    const struct JH_parameters params [const restrict static 1],
    const struct JH_knowledge k [const restrict static 1],
-   const JH_char word [const restrict static 1],
    const size_t word_size,
+   const JH_char word [const restrict static word_size],
    JH_index found_word_id [const restrict static 1],
    JH_index expected_word_sorted_ix [const restrict static 1],
    FILE io [const restrict static 1]
@@ -217,8 +217,8 @@ int JH_knowledge_lazy_find_word
 (
    const struct JH_parameters params [const restrict static 1],
    const struct JH_knowledge k [const restrict static 1],
-   const JH_char word [const restrict static 1],
    const size_t word_size,
+   const JH_char word [const restrict static word_size],
    JH_index found_word_id [const restrict static 1],
    JH_index expected_word_sorted_ix [const restrict static 1],
    FILE io [const restrict static 1]
@@ -254,8 +254,8 @@ int JH_knowledge_rarest_word
 (
    const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
-   const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
+   const JH_index sequence [const restrict static sequence_length],
    JH_index word_id [const restrict static 1],
    FILE io [const restrict static 1]
 );

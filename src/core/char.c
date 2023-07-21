@@ -16,10 +16,10 @@ JH_char JH_char_to_lowercase (const JH_char c)
 /* See: "char.c" */
 int JH_word_cmp
 (
-   const JH_char word_a [const static 1],
    const size_t word_a_size,
-   const JH_char word_b [const static 1],
-   const size_t word_b_size
+   const JH_char word_a [const static word_a_size],
+   const size_t word_b_size,
+   const JH_char word_b [const static word_b_size]
 )
 {
    int result;

@@ -19,8 +19,8 @@ static void parse_swt_sequence
 (
    const JH_index sequence [const restrict static 1],
    const size_t index,
-   JH_index buffer [const restrict static 1],
-   const JH_index buffer_length
+   const JH_index buffer_length,
+   JH_index buffer [const restrict static buffer_length]
 )
 {
    size_t j;
@@ -47,17 +47,17 @@ static int add_swt_sequence
 (
    const struct JH_parameters params [const restrict static 1],
    struct JH_knowledge k [const restrict static 1],
-   const JH_index sequence [const restrict static 1],
-   const size_t index,
    const size_t sequence_length,
-   JH_index buffer [const restrict static 1],
+   const JH_index sequence [const restrict static sequence_length],
+   const size_t index,
    const JH_index buffer_length,
+   JH_index buffer [const restrict static buffer_length],
    FILE io [const restrict static 1]
 )
 {
    JH_index sequence_id;
 
-   parse_swt_sequence(sequence, index, buffer, buffer_length);
+   parse_swt_sequence(sequence, index, buffer_length, buffer);
 
    if
    (
@@ -109,11 +109,11 @@ static int add_swt_sequence
 /******************************************************************************/
 static void parse_tws_sequence
 (
-   const JH_index sequence [const restrict static 1],
-   const size_t index,
    const size_t sequence_length,
-   JH_index buffer [const restrict static 1],
-   const JH_index buffer_length
+   const JH_index sequence [const restrict static sequence_length],
+   const size_t index,
+   const JH_index buffer_length,
+   JH_index buffer [const restrict static buffer_length]
 )
 {
    size_t j;
@@ -141,14 +141,14 @@ static int add_tws_sequence
    const size_t sequence_length,
    const JH_index sequence [const restrict static sequence_length],
    const size_t index,
-   JH_index buffer [const restrict static 1],
    const JH_index buffer_length,
+   JH_index buffer [const restrict static buffer_length],
    FILE io [const restrict static 1]
 )
 {
    JH_index sequence_id;
 
-   parse_tws_sequence(sequence, index, sequence_length, buffer, buffer_length);
+   parse_tws_sequence(sequence_length, sequence, index, buffer_length, buffer);
 
    if
    (
@@ -240,11 +240,11 @@ int JH_knowledge_learn_sequence
          (
             params,
             k,
+            sequence_length,
             sequence,
             i,
-            sequence_length,
-            buffer,
             buffer_length,
+            buffer,
             io
          ) < 0
       )
@@ -264,8 +264,8 @@ int JH_knowledge_learn_sequence
             sequence_length,
             sequence,
             i,
-            buffer,
             buffer_length,
+            buffer,
             io
          ) < 0
       )

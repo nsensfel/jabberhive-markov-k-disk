@@ -19,9 +19,9 @@
 static int add_word_to_sequence
 (
    const struct JH_parameters params [const restrict static 1],
-   const JH_char string [const restrict static 1],
    const size_t word_start,
    const size_t word_length,
+   const JH_char string [const restrict static (word_start + word_length)],
    JH_index * sequence [const restrict static 1],
    size_t sequence_capacity [const restrict static 1],
    size_t sequence_length [const restrict static 1],
@@ -37,8 +37,8 @@ static int add_word_to_sequence
       (
          params,
          k,
-         (string + word_start),
          word_length,
+         (string + word_start),
          &word_id,
          io
       ) < 0
@@ -67,8 +67,8 @@ static int add_word_to_sequence
 
 static int find_word
 (
-   const JH_char string [const restrict static 1],
    const size_t string_length,
+   const JH_char string [const restrict static string_length],
    const size_t offset,
    size_t word_start [const restrict static 1],
    size_t word_length [const restrict static 1]
@@ -108,8 +108,8 @@ static int find_word
 int JH_sequence_from_undercase_string
 (
    const struct JH_parameters params [const restrict static 1],
-   const JH_char string [const restrict],
    const size_t string_length,
+   const JH_char string [const restrict static string_length],
    struct JH_knowledge k [const restrict static 1],
    JH_index * sequence [const restrict static 1],
    size_t sequence_capacity [const restrict static 1],
@@ -158,7 +158,7 @@ int JH_sequence_from_undercase_string
 
    while (i < string_length)
    {
-      if (find_word(string, string_length, i, &word_start, &word_length) < 0)
+      if (find_word(string_length, string, i, &word_start, &word_length) < 0)
       {
          break;
       }
@@ -177,9 +177,9 @@ int JH_sequence_from_undercase_string
          add_word_to_sequence
          (
             params,
-            string,
             word_start,
             word_length,
+            string,
             sequence,
             sequence_capacity,
             sequence_length,

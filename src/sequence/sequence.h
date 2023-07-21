@@ -94,8 +94,8 @@ int JH_sequence_ensure_capacity
 int JH_sequence_from_undercase_string
 (
    const struct JH_parameters params [const restrict static 1],
-   const JH_char string [const restrict],
    const size_t string_length,
+   const JH_char string [const restrict static string_length],
    struct JH_knowledge k [const restrict static 1],
    JH_index * sequence [const restrict static 1],
    size_t sequence_capacity [const restrict static 1],
@@ -316,16 +316,16 @@ int JH_sequence_append_right
  */
 int JH_sequence_cmp
 (
-   const JH_index sequence_a [const restrict static 1],
-   const JH_index sequence_b [const restrict static 1],
-   const JH_index length
+   const JH_index length,
+   const JH_index sequence_a [const restrict static length],
+   const JH_index sequence_b [const restrict static length]
 );
 
 int JH_sequence_to_undercase_string
 (
    const struct JH_parameters params [const restrict static 1],
-   const JH_index sequence [const restrict static 1],
    const size_t sequence_length,
+   const JH_index sequence [const restrict static sequence_length],
    struct JH_knowledge k [const restrict static 1],
    JH_char * destination [const restrict static 1],
    size_t destination_capacity [const restrict static 1],

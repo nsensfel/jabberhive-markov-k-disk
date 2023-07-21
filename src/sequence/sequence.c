@@ -23,9 +23,9 @@
 @*/
 int JH_sequence_cmp
 (
-   const JH_index sequence_a [const restrict static 1],
-   const JH_index sequence_b [const restrict static 1],
-   const JH_index length
+   const JH_index length,
+   const JH_index sequence_a [const restrict static length],
+   const JH_index sequence_b [const restrict static length]
 )
 {
    JH_index i, a, b;
