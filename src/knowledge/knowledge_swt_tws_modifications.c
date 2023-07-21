@@ -70,9 +70,10 @@ static int add_target
 
    JH_knowledge_finalize_adjacent_sequence(&as);
 
-   if (t_index != (length - 1))
-   {
-      if
+   if
+   (
+      (t_index < (length - 1))
+      &&
       (
          JH_io_shift_sequence_target_from_id
          (
@@ -86,9 +87,9 @@ static int add_target
          )
          < 0
       )
-      {
-         return -1;
-      }
+   )
+   {
+      return -1;
    }
 
    target.id = target_id;
@@ -156,16 +157,20 @@ static int add_adjacent_sequence
 
    if
    (
-      JH_io_shift_adjacent_sequence_from_id
+      (adjacent_sequence_ix < (new_length - 1))
+      &&
       (
-         params,
-         word_id,
-         adjacent_sequence_ix,
-         is_swt,
-         (new_length - 1),
-         io
+         JH_io_shift_adjacent_sequence_from_id
+         (
+            params,
+            word_id,
+            adjacent_sequence_ix,
+            is_swt,
+            (new_length - 1),
+            io
+         )
+         < 0
       )
-      < 0
    )
    {
       return -3;

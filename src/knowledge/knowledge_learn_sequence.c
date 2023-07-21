@@ -211,12 +211,7 @@ int JH_knowledge_learn_sequence
    size_t i;
    const JH_index buffer_length = (JH_parameters_get_markov_order(params) - 1);
 
-   buffer =
-      (JH_index *) calloc
-      (
-         (size_t) buffer_length,
-         sizeof(JH_index)
-      );
+   buffer = (JH_index *) calloc((size_t) buffer_length, sizeof(JH_index));
 
    if (buffer == (JH_index *) NULL)
    {
@@ -275,8 +270,6 @@ int JH_knowledge_learn_sequence
          return -1;
       }
 
-      JH_knowledge_writelock_word(k, sequence[i], io);
-
       if
       (
          JH_io_generate_word_filename
@@ -289,11 +282,12 @@ int JH_knowledge_learn_sequence
          < 0
       )
       {
-         JH_knowledge_writeunlock_word(k, sequence[i], io);
          free((void *) buffer);
 
          return -1;
       }
+
+      JH_knowledge_writelock_word(k, sequence[i], io);
 
       if (JH_io_read_word(word_filename, &word, io) < 0)
       {
