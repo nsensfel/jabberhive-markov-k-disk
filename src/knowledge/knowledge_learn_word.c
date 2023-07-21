@@ -45,7 +45,7 @@ static JH_char * copy_word
       (JH_char *)
       calloc
       (
-         original_length,
+         original_length + 1,
          sizeof(JH_char)
       );
 
@@ -62,6 +62,8 @@ static JH_char * copy_word
       (const void *) original,
       (((size_t) original_length) * sizeof(JH_char))
    );
+
+   result[original_length] = '\0';
 
    return result;
 }
