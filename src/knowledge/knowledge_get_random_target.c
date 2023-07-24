@@ -13,6 +13,27 @@
 
 #include "knowledge.h"
 
+/**
+ * Picks a random target word, with the occurrences count of each target being
+ * used as their weight.
+ *
+ * Returns: 0 on success, -1 on error.
+ *
+ * Pre:
+ *    - Initialized `params`.
+ *    - Read lock on `word_id`.
+ *    - `sum == (\sum (\e -> e.occurrences) word[word_id].swt)`.
+ *    - `adjacent_sequence_ix` is a valid index for the word adjacent sequences
+ *       list associated with `sequence_is_prefix`.
+ *
+ * Post:
+ *    - *resulting_id is the ID of a randomly selected target word from
+ *       word[word_id]'s relevant adjacent sequence list.
+ *
+ * Notes:
+ *    - Does not acquire locks.
+ *    - frees up anything it may have allocated before returning.
+ **/
 static int weighted_random_target_id_pick
 (
    const struct JH_parameters params [const restrict static 1],
@@ -102,6 +123,7 @@ static int weighted_random_target_id_pick
    }
 }
 
+/* See "knowledge.h" */
 int JH_knowledge_random_target
 (
    const struct JH_parameters params [const restrict static 1],
@@ -137,6 +159,8 @@ int JH_knowledge_random_target
    }
    else if (ret == 0)
    {
+      JH_knowledge_readunlock_word(k, word_id, io);
+
       JH_PROG_ERROR
       (
          io,
@@ -146,7 +170,7 @@ int JH_knowledge_random_target
          adjacent_sequence_index,
          sequence_id
       );
-      JH_knowledge_readunlock_word(k, word_id, io);
+
 
       return -1;
    }

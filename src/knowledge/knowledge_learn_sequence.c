@@ -15,6 +15,7 @@
 /******************************************************************************/
 /** LEARN FOLLOWING SEQUENCE **************************************************/
 /******************************************************************************/
+// Copies SWT sequence at index.
 static void parse_swt_sequence
 (
    const JH_index sequence [const restrict static 1],
@@ -26,10 +27,15 @@ static void parse_swt_sequence
    size_t j;
    size_t index_offset;
 
+   // We can't simply read [`index - buffer_length`, ..., `index - 1`], because
+   // we're working with unsigned numbers.
+   // `index_offset` is how much we should remove from index.
    index_offset = buffer_length;
 
    for (j = 0; j < buffer_length; ++j)
    {
+      // if removing from index yields a positive or null number, we can take
+      // it. Otherwise, it's a START_OF_THE_SEQUENCE_ID.
       if (index >= index_offset)
       {
          buffer[j] = sequence[index - index_offset];
@@ -74,8 +80,10 @@ static int add_swt_sequence
       return -1;
    }
 
+   // Strengthen the link to the target.
    if (index == (sequence_length - 1))
    {
+      // If index is the last word of the sentence, target End-Of-Sequence.
       return
          JH_knowledge_strengthen_adjacent_sequence
          (
@@ -90,6 +98,7 @@ static int add_swt_sequence
    }
    else
    {
+      // Otherwise, target the next element.
       return
          JH_knowledge_strengthen_adjacent_sequence
          (
@@ -165,6 +174,8 @@ static int add_tws_sequence
       return -1;
    }
 
+   // If the word is the first one of the sequence, then the target is
+   // Start-of-Sequence. otherwise, it's the preceding word.
    if (index == 0)
    {
       return

@@ -14,6 +14,7 @@
 
 #include "knowledge.h"
 
+/* See "knowledge.h". */
 int JH_knowledge_lazy_find_sequence
 (
    const struct JH_parameters params [const restrict static 1],
@@ -33,15 +34,18 @@ int JH_knowledge_lazy_find_sequence
          - 1
       );
 
+   // We'll override this if we find the target.
+   *found_sequence_id = k->sequences_length;
+
    /* Handles the case where the list is empty ********************************/
 
    if (k->sequences_length == 0)
    {
       *expected_sequence_sorted_ix = 0;
-      *found_sequence_id = 0;
 
       return 0;
    }
+
 
    /***************************************************************************/
 
@@ -83,6 +87,7 @@ int JH_knowledge_lazy_find_sequence
 
       if (cmp > 0)
       {
+         // Target is greater than candidate.
          // Need to go at a higher index.
 
          if (mod < 0)
@@ -96,11 +101,15 @@ int JH_knowledge_lazy_find_sequence
 
          mod = 1;
 
+         // Limit cases with mod = 0 already handled before for loop.
+         // Likewise, case of *expected_sequence_sorted_ix == k->sequences_length
+         // pre-increase is handled.
          *expected_sequence_sorted_ix += 1;
 
          if ((*expected_sequence_sorted_ix) >= k->sequences_length)
          {
             // Last element of the list is lower than target.
+            // *expected_sequence_sorted_ix already at k->sequences_length.
 
             return 0;
          }
@@ -113,18 +122,23 @@ int JH_knowledge_lazy_find_sequence
       }
       else if (cmp < 0)
       {
+         // Target is lower than candidate.
          // Need to go at a lower index.
 
          if (mod > 0)
          {
             // We were going up.
-            // So our current index is what we want.
+            // So our current index is what we want (lowest value greater than
+            // target).
+            // *expected_sequence_sorted_ix unchanged;
 
             return 0;
          }
 
          mod = -1;
 
+         // Limit cases with mod = 0 not handled, check for it before changing
+         // *expected_sequence_sorted_ix.
          if (*expected_sequence_sorted_ix > 0)
          {
             *expected_sequence_sorted_ix -= 1;
@@ -132,6 +146,7 @@ int JH_knowledge_lazy_find_sequence
          else
          {
             // first element of sorted list is greater than target.
+            // *expected_sequence_sorted_ix already at 0.
 
             return 0;
          }
@@ -143,7 +158,7 @@ int JH_knowledge_lazy_find_sequence
 int JH_knowledge_lazy_find_word
 (
    const struct JH_parameters params [const restrict static 1],
-   const struct JH_knowledge k [const restrict static 1],
+   struct JH_knowledge k [const restrict static 1],
    const size_t word_size,
    const JH_char word [const restrict static word_size],
    JH_index found_word_id [const restrict static 1],
@@ -155,17 +170,18 @@ int JH_knowledge_lazy_find_word
    int cmp, mod;
    struct JH_knowledge_word candidate;
 
+   // Will be changed if the word is found.
+   *expected_word_sorted_ix = k->words_length;
+
    /* Handles the case where the list is empty ********************************/
    if (k->words_length == 0)
    {
       *found_word_id = 0;
-      *expected_word_sorted_ix = 0;
 
       return 0;
    }
 
    /***************************************************************************/
-
    if ((*expected_word_sorted_ix) >= k->words_length)
    {
       // No new words were inserted, and this word belongs to the end of the
@@ -176,19 +192,18 @@ int JH_knowledge_lazy_find_word
 
    for (;;)
    {
-      if
-      (
-         JH_io_read_word_from_id
-         (
-            params,
-            k->words_sorted[*expected_word_sorted_ix],
-            &candidate,
-            io
-         )
-         < 0
-      )
+      const JH_index candidate_id = k->words_sorted[*expected_word_sorted_ix];
+
+      if (JH_knowledge_readlock_word(k, candidate_id, io) < 0)
       {
          return -1;
+      }
+
+      if (JH_io_read_word_from_id(params, candidate_id, &candidate, io) < 0)
+      {
+         JH_knowledge_readunlock_word(k, candidate_id, io);
+
+         return -2;
       }
 
       cmp =
@@ -200,15 +215,19 @@ int JH_knowledge_lazy_find_word
             candidate.word
          );
 
+      JH_knowledge_readunlock_word(k, candidate_id, io);
+
       JH_knowledge_finalize_word(&candidate);
 
       if (cmp > 0)
       {
+         // Target is greater than candidate.
          // word is higher.
+
          if (mod < 0)
          {
-            // We were going down, so
-            // should be the index we had just before.
+            // We were going down, so should be the index we had just before,
+            // as it was greater than the target, unlike this one.
             *expected_word_sorted_ix += 1;
 
             return 0;
@@ -216,6 +235,9 @@ int JH_knowledge_lazy_find_word
 
          mod = 1;
 
+         // Limit cases with mod = 0 already handled before for loop.
+         // Likewise, case of *expected_word_sorted_ix == k->words_length
+         // pre-increase is handled.
          *expected_word_sorted_ix += 1;
 
          if ((*expected_word_sorted_ix) >= k->words_length)
@@ -232,17 +254,19 @@ int JH_knowledge_lazy_find_word
       }
       else if (cmp < 0)
       {
-         // word is lower.
+         // Target is lower than candidate.
+         // Should check candidates lower.
 
          if (mod > 0)
          {
-            // We were going up, so it
-            // should be at this index.
+            // We were going up, so this candidate is the lowest word that's
+            // greater than our target.
             return 0;
          }
 
          mod = -1;
 
+         // Don't lower before checking we aren't at the start of the list.
          if (*expected_word_sorted_ix > 0)
          {
             *expected_word_sorted_ix -= 1;

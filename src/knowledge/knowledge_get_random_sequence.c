@@ -13,6 +13,24 @@
 
 #include "knowledge.h"
 
+/**
+ * Picks a random prefix sequence for word, with the occurrence of each prefix
+ * sequence being used as their weight.
+ *
+ * Returns: 0 on success, -1 on error.
+ *
+ * Pre:
+ *    - Read lock on `word_id`.
+ *    - `sum == (\sum (\e -> e.occurrences) word[word_id].swt)`.
+ *
+ * Post:
+ *    - `*resulting_id` is the ID of a randomly selected prefix sequence for
+ *       word[word_id].
+ *
+ * Notes:
+ *    - Does not acquire locks.
+ *    - frees up anything it may have allocated before returning.
+ **/
 static int weighted_random_pick
 (
    const struct JH_parameters params [const restrict static 1],
@@ -86,6 +104,7 @@ static int weighted_random_pick
    }
 }
 
+/* See: "knowledge.h" */
 int JH_knowledge_copy_random_prefix
 (
    const struct JH_parameters params [const restrict static 1],
@@ -164,6 +183,8 @@ int JH_knowledge_copy_random_prefix
          * sizeof(JH_index)
       )
    );
+
+   JH_knowledge_finalize_sequence(&prefix_sequence);
 
    return 0;
 }

@@ -53,7 +53,6 @@ int JH_knowledge_find_sequence
 
    while (current_min <= current_max)
    {
-
       i = (current_min + ((current_max - current_min) / 2));
 
       if
@@ -84,23 +83,12 @@ int JH_knowledge_find_sequence
       if (cmp > 0)
       {
          current_min = (i + 1);
-
-         if (current_min > current_max)
-         {
-            *found_sequence_id = k->sequences_length;
-            *expected_sequence_sorted_ix = current_min;
-
-            return 0;
-         }
       }
       else if (cmp < 0)
       {
-         if ((current_min >= current_max) || (i == 0))
+         if (i == 0)
          {
-            *found_sequence_id = k->sequences_length;
-            *expected_sequence_sorted_ix = current_min;
-
-            return 0;
+            break;
          }
 
          current_max = (i - 1);
@@ -190,23 +178,12 @@ int JH_knowledge_find_word
       if (cmp > 0)
       {
          current_min = ((*expected_word_sorted_ix) + 1);
-
-         if (current_min > current_max)
-         {
-            *found_word_id = k->words_length;
-            *expected_word_sorted_ix = current_min;
-
-            return 0;
-         }
       }
       else if (cmp < 0)
       {
-         if ((current_min >= current_max) || (*expected_word_sorted_ix == 0))
+         if (*expected_word_sorted_ix == 0)
          {
-            *found_word_id = k->words_length;
-            *expected_word_sorted_ix = current_min;
-
-            return 0;
+            break;
          }
 
          current_max = ((*expected_word_sorted_ix) - 1);
@@ -297,21 +274,12 @@ int JH_knowledge_find_adjacent_sequence
       if (cmp > 0)
       {
          current_min = (i + 1);
-
-         if (current_min > current_max)
-         {
-            *expected_index = current_min;
-
-            return 0;
-         }
       }
       else if (cmp < 0)
       {
-         if ((current_min >= current_max) || (i == 0))
+         if (i == 0)
          {
-            *expected_index = current_min;
-
-            return 0;
+            break;
          }
 
          current_max = (i - 1);
@@ -407,25 +375,12 @@ int JH_knowledge_find_sequence_target
       if (cmp > 0)
       {
          current_min = (i + 1);
-
-         if (current_min > current_max)
-         {
-            *result_ix = current_min;
-
-            JH_knowledge_finalize_adjacent_sequence(&as);
-
-            return 0;
-         }
       }
       else if (cmp < 0)
       {
-         if ((current_min >= current_max) || (i == 0))
+         if (i == 0)
          {
-            *result_ix = current_min;
-
-            JH_knowledge_finalize_adjacent_sequence(&as);
-
-            return 0;
+            break;
          }
 
          current_max = (i - 1);

@@ -11,6 +11,13 @@
 
 /** Basic functions of the JH_knowledge structure ****************************/
 
+/**
+ * Creates the minimal database needed to run.
+ * This includes the sorted words and sequences files, as well as the reserved
+ * start-of-sentence and end-of-sentence words.
+ *
+ * Returns 0 on success, negative values on error.
+ **/
 static int initialize_without_database
 (
    const struct JH_parameters params [const restrict static 1],
@@ -18,6 +25,7 @@ static int initialize_without_database
    FILE io [const restrict static 1]
 )
 {
+   // Needed argument for `JH_knowledge_learn_word`. Not actually used.
    JH_index reserved_word_id;
 
    if (JH_io_initialize_database(params, io) < 0)
@@ -52,6 +60,10 @@ static int initialize_without_database
       )
    )
    {
+      // This is a less than ideal situation: the database folder is incomplete,
+      // yet likely to pass the initialization test.
+      // TODO: should we delete the database folder here and output a warning
+      //       if we fail to do so?
       JH_S_FATAL(io, "Unable to learn reserved words.");
 
       return -2;
@@ -60,6 +72,16 @@ static int initialize_without_database
    return 0;
 }
 
+/**
+ * Reads data from an existing database, so that the `k` structure retrieves the
+ * sorted words and sequences files' data, which is all that's needed to re-use
+ * the database.
+ * The locks for each word are also re-created. Their state is not stored in the
+ * database, but any thread that may have acquired them is no longer running, so
+ * it's fine (the database cannot be used by multiple servers at once).
+ *
+ * Returns 0 on success, negative values on error.
+ **/
 static int initialize_with_database
 (
    struct JH_knowledge k [const restrict static 1],
@@ -272,6 +294,7 @@ int JH_knowledge_initialize
    return 0;
 }
 
+/* See: "knowledge.h" */
 int JH_knowledge_get_word
 (
    const struct JH_parameters params [const restrict static 1],
@@ -286,17 +309,7 @@ int JH_knowledge_get_word
 
    JH_knowledge_readlock_word(k, word_id, io);
 
-   if
-   (
-      JH_io_read_word_from_id
-      (
-         params,
-         word_id,
-         &target,
-         io
-      )
-      < 0
-   )
+   if (JH_io_read_word_from_id(params, word_id, &target, io) < 0)
    {
       JH_knowledge_readunlock_word(k, word_id, io);
 
@@ -317,7 +330,7 @@ int JH_knowledge_get_word
 
       *word_length = 0;
 
-      return -1;
+      return -2;
    }
 
    memcpy(*word, target.word, sizeof(char) * (target.word_length + 1));
@@ -331,6 +344,7 @@ int JH_knowledge_get_word
    return 0;
 }
 
+/* See: "knowledge.h" */
 int JH_knowledge_rarest_word
 (
    const struct JH_parameters params [const restrict static 1],
@@ -355,23 +369,13 @@ int JH_knowledge_rarest_word
 
       JH_knowledge_readlock_word(k, sequence[i], io);
 
-      if
-      (
-         JH_io_read_word_from_id
-         (
-            params,
-            sequence[i],
-            &candidate,
-            io
-         )
-         < 0
-      )
+      if (JH_io_read_word_from_id(params, sequence[i], &candidate, io) < 0)
       {
          JH_knowledge_readunlock_word(k, sequence[i], io);
 
          JH_ERROR(io, "Could not get word %u", sequence[i]);
 
-         return -1;
+         return -2;
       }
 
       JH_knowledge_readunlock_word(k, sequence[i], io);

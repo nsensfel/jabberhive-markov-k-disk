@@ -250,27 +250,35 @@ static int extend_right
    FILE io [const restrict static 1]
 )
 {
+   int ret;
    JH_index sequence_id, expected_sequence_sorted_ix, word_id;
 
    /* preceding_words_weights_sum > 0 */
 
    JH_knowledge_readlock_sequences(k, io);
 
-   if
-   (
+   ret =
       JH_knowledge_find_sequence
       (
          params,
          k,
+         // [a, b, c, d, e], order = 3, sequence_length = 5
+         // (sequence_length - order) = 2.
+         // [c, d] is the prefix. e is the word.
          ((*sequence) + (*sequence_length - markov_order)),
          &sequence_id,
          &expected_sequence_sorted_ix,
          io
-      ) < 0
-   )
-   {
-      JH_knowledge_readunlock_sequences(k, io);
+      );
 
+   JH_knowledge_readunlock_sequences(k, io);
+
+   if (ret < 0)
+   {
+      return -1;
+   }
+   else if (ret == 0)
+   {
       JH_S_PROG_ERROR
       (
          io,
@@ -280,8 +288,6 @@ static int extend_right
 
       return -1;
    }
-
-   JH_knowledge_readunlock_sequences(k, io);
 
    if
    (

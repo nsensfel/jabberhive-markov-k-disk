@@ -17,27 +17,43 @@
 /******************************************************************************/
 /** INITIALIZE ****************************************************************/
 /******************************************************************************/
+/**
+ * Updates the sorted sequence list, both in RAM and on disk, to insert the
+ * new element.
+ **/
 static void set_nth_sequence
 (
    const struct JH_knowledge k [const restrict static 1],
    const JH_index sorted_sequence_ix,
-   const JH_index sequence_id
+   const JH_index sequence_id,
+   FILE io [const restrict static 1]
 )
 {
-   if (sorted_sequence_ix < (k->sequences_length - 1))
+   // WARNING: sequences_length has already been increased.
+   const JH_index previous_sequence_length = (k->sequences_length - 1);
+
+   if (sorted_sequence_ix < previous_sequence_length)
    {
       memmove
       (
          (void *) (k->sequences_sorted + (sorted_sequence_ix + 1)),
          (const void *) (k->sequences_sorted + sorted_sequence_ix),
          (
-            ((size_t) ((k->sequences_length - 1) - sorted_sequence_ix))
+            ((size_t) (previous_sequence_length - sorted_sequence_ix))
             * sizeof(JH_index)
          )
       );
    }
 
    k->sequences_sorted[sorted_sequence_ix] = sequence_id;
+
+   JH_io_write_sorted_sequences
+   (
+      k->sequences_sorted_filename,
+      k->sequences_length,
+      k->sequences_sorted,
+      io
+   );
 }
 
 /******************************************************************************/
@@ -167,15 +183,7 @@ static int add_sequence
       return -1;
    }
 
-   set_nth_sequence(k, sorted_sequence_ix, sequence_id);
-
-   JH_io_write_sorted_sequences
-   (
-      k->sequences_sorted_filename,
-      k->sequences_length,
-      k->sequences_sorted,
-      io
-   );
+   set_nth_sequence(k, sorted_sequence_ix, sequence_id, io);
 
    return 0;
 }

@@ -2,6 +2,7 @@
 
 #include "knowledge.h"
 
+/* See "knowledge.h". */
 void JH_knowledge_finalize_sequence_target
 (
    const struct JH_knowledge_target target [const restrict static 1]
@@ -10,6 +11,7 @@ void JH_knowledge_finalize_sequence_target
    (void) target;
 }
 
+/* See "knowledge.h". */
 void JH_knowledge_finalize_adjacent_sequence
 (
    const struct JH_knowledge_adjacent_sequence as [const restrict static 1]
@@ -33,6 +35,7 @@ void JH_knowledge_finalize_sequence_collection
 }
 */
 
+/* See "knowledge.h". */
 void JH_knowledge_finalize_sequence
 (
    JH_index * sequence [const restrict static 1]
@@ -46,6 +49,7 @@ void JH_knowledge_finalize_sequence
    }
 }
 
+/* See "knowledge.h". */
 void JH_knowledge_finalize_word
 (
    struct JH_knowledge_word word [const restrict static 1]

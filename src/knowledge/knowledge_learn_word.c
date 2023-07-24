@@ -170,11 +170,13 @@ static void set_nth_word
 (
    struct JH_knowledge k [const restrict static 1],
    const JH_index sorted_word_id,
-   const JH_index word_id
+   const JH_index word_id,
+   FILE io [const restrict static 1]
 )
 {
+   const JH_index previous_words_length = (k->words_length - 1);
    /* Safe: (> k->words_length 1) */
-   if (sorted_word_id < (k->words_length - 1))
+   if (sorted_word_id < previous_words_length)
    {
       memmove
       (
@@ -182,13 +184,21 @@ static void set_nth_word
          (void *) (k->words_sorted + (sorted_word_id + 1)),
          (const void *) (k->words_sorted + sorted_word_id),
          (
-            ((size_t) ((k->words_length - 1) - sorted_word_id))
+            ((size_t) (previous_words_length - sorted_word_id))
             * sizeof(JH_index)
          )
       );
    }
 
    k->words_sorted[sorted_word_id] = word_id;
+
+   JH_io_write_sorted_words
+   (
+      k->words_sorted_filename,
+      k->words_length,
+      k->words_sorted,
+      io
+   );
 }
 
 static int add_word
@@ -289,15 +299,7 @@ static int add_word
       return -1;
    }
 
-   set_nth_word(k, sorted_word_id, word_id);
-
-   JH_io_write_sorted_words
-   (
-      k->words_sorted_filename,
-      k->words_length,
-      k->words_sorted,
-      io
-   );
+   set_nth_word(k, sorted_word_id, word_id, io);
 
    error =
       pthread_rwlock_init
