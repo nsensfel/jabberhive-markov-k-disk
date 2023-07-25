@@ -245,7 +245,7 @@ int JH_knowledge_find_word
 int JH_knowledge_lazy_find_word
 (
    const struct JH_parameters params [const restrict static 1],
-   struct JH_knowledge k [const restrict static 1],
+   const struct JH_knowledge k [const restrict static 1],
    const size_t word_size,
    const JH_char word [const restrict static word_size],
    JH_index found_word_id [const restrict static 1],

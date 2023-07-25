@@ -25,6 +25,9 @@ int JH_knowledge_lazy_find_sequence
    FILE io [const restrict static 1]
 )
 {
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+   int iterations;
+#endif
    int cmp, mod;
    JH_index * candidate_sequence;
 
@@ -34,6 +37,9 @@ int JH_knowledge_lazy_find_sequence
          - 1
       );
 
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+   iterations = 0;
+#endif
    // We'll override this if we find the target.
    *found_sequence_id = k->sequences_length;
 
@@ -60,6 +66,10 @@ int JH_knowledge_lazy_find_sequence
 
    for (;;)
    {
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+      iterations += 1;
+#endif
+
       if
       (
          JH_io_read_sequence_from_id
@@ -96,6 +106,9 @@ int JH_knowledge_lazy_find_sequence
             // so we should be returning index we had just before.
             *expected_sequence_sorted_ix += 1;
 
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+            JH_DEBUG(io, 1, "Sequence took %d search adjustments.", iterations);
+#endif
             return 0;
          }
 
@@ -111,13 +124,18 @@ int JH_knowledge_lazy_find_sequence
             // Last element of the list is lower than target.
             // *expected_sequence_sorted_ix already at k->sequences_length.
 
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+            JH_DEBUG(io, 1, "Sequence took %d search adjustments.", iterations);
+#endif
             return 0;
          }
       }
       else if (cmp == 0)
       {
          *found_sequence_id = k->sequences_sorted[*expected_sequence_sorted_ix];
-
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+         JH_DEBUG(io, 1, "Sequence took %d search adjustments.", iterations);
+#endif
          return 1;
       }
       else if (cmp < 0)
@@ -132,6 +150,9 @@ int JH_knowledge_lazy_find_sequence
             // target).
             // *expected_sequence_sorted_ix unchanged;
 
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+            JH_DEBUG(io, 1, "Sequence took %d search adjustments.", iterations);
+#endif
             return 0;
          }
 
@@ -148,6 +169,9 @@ int JH_knowledge_lazy_find_sequence
             // first element of sorted list is greater than target.
             // *expected_sequence_sorted_ix already at 0.
 
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+            JH_DEBUG(io, 1, "Sequence took %d search adjustments.", iterations);
+#endif
             return 0;
          }
       }
@@ -158,7 +182,7 @@ int JH_knowledge_lazy_find_sequence
 int JH_knowledge_lazy_find_word
 (
    const struct JH_parameters params [const restrict static 1],
-   struct JH_knowledge k [const restrict static 1],
+   const struct JH_knowledge k [const restrict static 1],
    const size_t word_size,
    const JH_char word [const restrict static word_size],
    JH_index found_word_id [const restrict static 1],
@@ -166,17 +190,24 @@ int JH_knowledge_lazy_find_word
    FILE io [const restrict static 1]
 )
 {
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+   int iterations;
+#endif
    /* This is a binary search */
    int cmp, mod;
    struct JH_knowledge_word candidate;
 
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+   iterations = 0;
+#endif
+
    // Will be changed if the word is found.
-   *expected_word_sorted_ix = k->words_length;
+   *found_word_id = k->words_length;
 
    /* Handles the case where the list is empty ********************************/
    if (k->words_length == 0)
    {
-      *found_word_id = 0;
+      *expected_word_sorted_ix = 0;
 
       return 0;
    }
@@ -193,16 +224,12 @@ int JH_knowledge_lazy_find_word
    for (;;)
    {
       const JH_index candidate_id = k->words_sorted[*expected_word_sorted_ix];
-
-      if (JH_knowledge_readlock_word(k, candidate_id, io) < 0)
-      {
-         return -1;
-      }
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+      iterations += 1;
+#endif
 
       if (JH_io_read_word_from_id(params, candidate_id, &candidate, io) < 0)
       {
-         JH_knowledge_readunlock_word(k, candidate_id, io);
-
          return -2;
       }
 
@@ -214,8 +241,6 @@ int JH_knowledge_lazy_find_word
             candidate.word_length,
             candidate.word
          );
-
-      JH_knowledge_readunlock_word(k, candidate_id, io);
 
       JH_knowledge_finalize_word(&candidate);
 
@@ -229,7 +254,9 @@ int JH_knowledge_lazy_find_word
             // We were going down, so should be the index we had just before,
             // as it was greater than the target, unlike this one.
             *expected_word_sorted_ix += 1;
-
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+            JH_DEBUG(io, 1, "Word took %d search adjustments.", iterations);
+#endif
             return 0;
          }
 
@@ -243,12 +270,18 @@ int JH_knowledge_lazy_find_word
          if ((*expected_word_sorted_ix) >= k->words_length)
          {
             // end of list.
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+            JH_DEBUG(io, 1, "Word took %d search adjustments.", iterations);
+#endif
             return 0;
          }
       }
       else if (cmp == 0)
       {
          *found_word_id = k->words_sorted[*expected_word_sorted_ix];
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+         JH_DEBUG(io, 1, "Word took %d search adjustments.", iterations);
+#endif
 
          return 1;
       }
@@ -261,6 +294,9 @@ int JH_knowledge_lazy_find_word
          {
             // We were going up, so this candidate is the lowest word that's
             // greater than our target.
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+            JH_DEBUG(io, 1, "Word took %d search adjustments.", iterations);
+#endif
             return 0;
          }
 
@@ -274,7 +310,9 @@ int JH_knowledge_lazy_find_word
          else
          {
             // first element of sorted list is greater than target.
-
+#if JH_DEBUG_KNOWLEDGE_ADJUST_SEARCH
+            JH_DEBUG(io, 1, "Word took %d search adjustments.", iterations);
+#endif
             return 0;
          }
       }
